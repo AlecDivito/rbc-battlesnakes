@@ -1,5 +1,8 @@
 import logging
 import os
+from training.train import AtomicCounter, Trainer
+from training.snake import Snake
+from os import environ
 
 from flask import Flask
 from flask import request
@@ -8,6 +11,7 @@ import server_logic
 
 
 app = Flask(__name__)
+state = server_logic.State()
 
 
 @app.get("/")
@@ -38,8 +42,7 @@ def handle_start():
     request.json contains information about the game that's about to be played.
     """
     data = request.get_json()
-
-    print(f"{data['game']['id']} START")
+    state.newGame(data["game"]["id"])
     return "ok"
 
 
@@ -50,11 +53,7 @@ def handle_move():
     Valid moves are "up", "down", "left", or "right".
     """
     data = request.get_json()
-
-    # TODO - look at the server_logic.py file to see how we decide what move to return!
-    move = server_logic.choose_move(data)
-
-    return {"move": move}
+    return {"move": state.move(data["game"]["id"])}
 
 
 @app.post("/end")
@@ -64,14 +63,36 @@ def end():
     It's purely for informational purposes, you don't have to make any decisions here.
     """
     data = request.get_json()
-
-    print(f"{data['game']['id']} END")
+    state.endGame(data["game"]["id"])
     return "ok"
 
 
 if __name__ == "__main__":
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
-
     print("Starting Battlesnake Server...")
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
+    if "BUILD_SNAKE_NETWORK" in os.environ:
+        # Start running the training script
+        print("Starting training network")
+        print("This testing script will fork the battlesnake binary multiple times and test it on your snake")
+        state.set_training(True)
+        command = "./battlesnake play --url localhost:8080 -g solo -v"
+        counter = AtomicCounter()
+        trainers = []
+        for index in range(6):
+            thread = Trainer(command, counter, 100)
+            thread.start()
+            trainers.append(thread)
+
+        for thread in trainers:
+            thread.join()
+    else:
+        # Load all of the script files
+        print("This function is currently not supportted")
+        print("TODO:")
+        print("Make sure that the neural network is saved after each generation")
+        print("Using a folder, open that up and use the best network there")
+        print("Will be implemented later")
+        state.set_training(False)

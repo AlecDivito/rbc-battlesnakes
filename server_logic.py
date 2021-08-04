@@ -1,4 +1,8 @@
 import random
+from training.population import Population
+from training.constant import BoardItem
+import numpy as np
+from training.snake import Snake
 from typing import List, Dict
 
 """
@@ -9,71 +13,96 @@ from the list of possible moves!
 """
 
 
-def avoid_my_neck(my_head: Dict[str, int], my_body: List[dict], possible_moves: List[str]) -> List[str]:
-    """
-    my_head: Dictionary of x/y coordinates of the Battlesnake head.
-            e.g. {"x": 0, "y": 0}
-    my_body: List of dictionaries of x/y coordinates for every segment of a Battlesnake.
-            e.g. [ {"x": 0, "y": 0}, {"x": 1, "y": 0}, {"x": 2, "y": 0} ]
-    possible_moves: List of strings. Moves to pick from.
-            e.g. ["up", "down", "left", "right"]
+class State:
 
-    return: The list of remaining possible_moves, with the 'neck' direction removed
-    """
-    my_neck = my_body[1]  # The segment of body right after the head is the 'neck'
+    def __init__(self) -> None:
+        self.world = {}
+        self.population = Population(100)
+        self.train = False
 
-    if my_neck["x"] < my_head["x"]:  # my neck is left of my head
-        possible_moves.remove("left")
-    elif my_neck["x"] > my_head["x"]:  # my neck is right of my head
-        possible_moves.remove("right")
-    elif my_neck["y"] < my_head["y"]:  # my neck is below my head
-        possible_moves.remove("down")
-    elif my_neck["y"] > my_head["y"]:  # my neck is above my head
-        possible_moves.remove("up")
+    def set_training(self, train=False):
+        self.train = train
 
-    return possible_moves
+    def newGame(self, id):
+        """
+        This function takes an ID and initializes a snake for a new game.
+
+        This function returns nothing
+        """
+        if self.train is True:
+            self.population.create_snake(id)
+        else:
+            self.world[id] = Game()
+
+    def move(self, id, data):
+        """
+        This function performs one `tick` of the game world and moves the
+        snake depending on what the network tells it.
+
+        This function returns the direction the snake should go. 
+        """
+        if self.train is True:
+            return self.population.tick(id, data)
+        else:
+            return self.world[id].tick(data)
+
+    def endGame(self, id):
+        """
+        This function deletes the game from our state. This could also be
+        where we can save some of the results of our game for further testing
+
+        returns nothing.
+        """
+        if self.train is True:
+            self.population.snake_died(id)
+        else:
+            del self.world[id]
 
 
-def choose_move(data: dict) -> str:
-    """
-    data: Dictionary of all Game Board data as received from the Battlesnake Engine.
-    For a full example of 'data', see https://docs.battlesnake.com/references/api/sample-move-request
+class Game:
 
-    return: A String, the single move to make. One of "up", "down", "left" or "right".
+    def __init__(self, snake) -> None:
+        self.snake = snake
 
-    Use the information in 'data' to decide your next move. The 'data' variable can be interacted
-    with as a Python Dictionary, and contains all of the information about the Battlesnake board
-    for each move of the game.
+    def tick(self, data):
+        game_board = data['board']
+        foods = game_board['food']
+        hazards = game_board['hazards']
 
-    """
-    my_head = data["you"]["head"]  # A dictionary of x/y coordinates like {"x": 0, "y": 0}
-    my_body = data["you"]["body"]  # A list of x/y coordinate dictionaries like [ {"x": 0, "y": 0}, {"x": 1, "y": 0}, {"x": 2, "y": 0} ]
+        you = data['you']
+        turn = data['turn']
+        health = you['health']
+        length = you['length']
 
-    # TODO: uncomment the lines below so you can see what this data looks like in your output!
-    # print(f"~~~ Turn: {data['turn']}  Game Mode: {data['game']['ruleset']['name']} ~~~")
-    # print(f"All board data this turn: {data}")
-    # print(f"My Battlesnakes head this turn is: {my_head}")
-    # print(f"My Battlesnakes body this turn is: {my_body}")
+        # 1. initialize the boards full of zeros
+        board = np.zeros((game_board['width'], game_board['height']))
 
-    possible_moves = ["up", "down", "left", "right"]
+        # 2. set all of the foods on the board
+        for food in foods:
+            board[food.x][food.y] = BoardItem.FOOD
 
-    # Don't allow your Battlesnake to move back in on it's own neck
-    possible_moves = avoid_my_neck(my_head, my_body, possible_moves)
+        # 3. set all of the hazards on the board
+        for hazard in hazards:
+            board[hazard.x][hazard.y] = BoardItem.HAZARD
 
-    # TODO: Using information from 'data', find the edges of the board and don't let your Battlesnake move beyond them
-    # board_height = ?
-    # board_width = ?
+        # 4. set enemy snakes and snake heads
+        for snake in game_board.snakes:
+            for body in snake.body:
+                board[body.x][body.y] = BoardItem.ENEMY_SNAKE
+            board[snake.head.x][snake.head.y] = BoardItem.ENEMY_SNAKE_HEAD
 
-    # TODO Using information from 'data', don't let your Battlesnake pick a move that would hit its own body
+        # 5. set friendly snake and head
+        for body in you.body:
+            board[body.x][body.y] = BoardItem.FRIENDLY_SNAKE
+        board[you.head.x][you.head.y] = BoardItem.FRIENDLY_SNAKE_HEAD
 
-    # TODO: Using information from 'data', don't let your Battlesnake pick a move that would collide with another Battlesnake
+        # 6. Normalize board with values between 0 and 6
+        board /= board.max()/6.0
 
-    # TODO: Using information from 'data', make your Battlesnake move towards a piece of food on the board
+        # 7. straighten board into a 11*11 1D array
+        inputBoard = board.ravel()
 
-    # Choose a random direction from the remaining possible_moves to move in, and then return that move
-    move = random.choice(possible_moves)
-    # TODO: Explore new strategies for picking a move that are better than random
-
-    print(f"{data['game']['id']} MOVE {data['turn']}: {move} picked from all valid options in {possible_moves}")
-
-    return move
+        # Send the move to the snake
+        next_move = self.snake.tick(turn, health, length, inputBoard)
+        possible_moves = ["up", "down", "left", "right"]
+        return possible_moves[next_move]
