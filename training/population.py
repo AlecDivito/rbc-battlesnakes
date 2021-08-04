@@ -2,7 +2,7 @@ from math import floor
 import random
 from training.constant import Evolution
 from training.snake import Snake
-from server_logic import Game
+from training.game import Game
 
 mutation_rate = 0.1
 
@@ -37,7 +37,7 @@ class Population:
             self.snake_games[id] = Game(Snake(11, 11))
             self.aliveSnakeIds.append(id)
         else:
-            if len(self.current_gen_snake_queue) is not 0:
+            if len(self.current_gen_snake_queue) != 0:
                 snake = self.current_gen_snake_queue.pop()
                 self.snake_games[id] = Game(snake)
                 self.aliveSnakeIds.append(id)
