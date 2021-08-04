@@ -46,3 +46,9 @@ class Snake:
         child = Snake(11, 11)
         child.network = self.network.crossover(partner.network)
         return child
+
+    def save_to_file(self, generation):
+        self.calculateFitness()
+        filename = "./network/gen:{}-fitness:{}.dat".format(
+            generation, self.fitness)
+        self.network.save(filename)

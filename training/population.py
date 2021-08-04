@@ -78,6 +78,9 @@ class Population:
         self.deadSnakeIds = []
         self.snake_games = {}
 
+    def save_best(self):
+        self.best_snake.save_to_file(self.generation)
+
     def mutate(self):
         for key in self.snake_games:
             self.snake_games[key].snake.mutate(mutation_rate)

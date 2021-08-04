@@ -4,18 +4,19 @@ import subprocess
 
 class Trainer(threading.Thread):
 
-    def __init__(self, cmd, counter, max_iterations, console=False):
+    def __init__(self, name, cmd, counter, max_iterations, console=False):
         threading.Thread.__init__(self)
+        self.name = name
         self.cmd = cmd.split()
         self.counter = counter
         self.max_iterations = max_iterations
         self.console = console
 
-    def start(self):
+    def run(self):
         if self.console is True:
             self.run_with_console()
         else:
-            self.run_without_console
+            self.run_without_console()
 
     def run_without_console(self):
         """
@@ -23,8 +24,9 @@ class Trainer(threading.Thread):
         """
         next_count = self.counter.increment()
         while next_count < self.max_iterations:
-            print("Running iteration {}".format(next_count))
-            subprocess.run(self.cmd, capture_output=False)
+            print("Thread {}: Running iteration {}".format(self.name, next_count))
+            subprocess.run(self.cmd, stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL, capture_output=False, text=False)
             next_count = self.counter.increment()
 
     def run_with_console(self):

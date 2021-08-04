@@ -1,5 +1,7 @@
+import math
 import numpy as np
 import random
+
 
 class Network:
 
@@ -7,10 +9,13 @@ class Network:
         self.inputNodes = inputNodes
         self.hiddenNodes = hiddenNodes
         self.outputNodes = outputNodes
-        self.inputLayer = np.random.rand(hiddenNodes, inputNodes + 1, dtype=np.float32)
-        self.hiddenLayer = np.random.rand(hiddenNodes, hiddenNodes + 1, dtype=np.float32)
-        self.outputLayer = np.random.rand(outputNodes, hiddenNodes + 1, dtype=np.float32)
-    
+        self.inputLayer = np.random.rand(
+            hiddenNodes, inputNodes + 1, dtype=np.float32)
+        self.hiddenLayer = np.random.rand(
+            hiddenNodes, hiddenNodes + 1, dtype=np.float32)
+        self.outputLayer = np.random.rand(
+            outputNodes, hiddenNodes + 1, dtype=np.float32)
+
     def calculateOutput(self, inputs):
         """
         Takes an `inputs`, which is an array of floats (np.float32[])
@@ -18,14 +23,16 @@ class Network:
         returns array of floats
         """
         # Input layer -> hidden layer
-        inputBais = self.addBias(inputs) # Add bias
-        hiddenInput = np.dot(self.inputLayer, [inputBais]) # Apply layer one weights to the inputs
-        hiddenOutputs = self.activate(hiddenInput) # Apply activation function
+        inputBais = self.addBias(inputs)  # Add bias
+        # Apply layer one weights to the inputs
+        hiddenInput = np.dot(self.inputLayer, [inputBais])
+        hiddenOutputs = self.activate(hiddenInput)  # Apply activation function
 
         # Hidden layer -> output layer
-        hiddenOutputsBias = self.addBias(hiddenOutputs) # Add bias
-        hiddenInput2 = np.dot(self.hiddenLayer, hiddenOutputsBias) # Apply weights
-        hiddenOutputs2 = self.activate(hiddenInput2) # Apply activation
+        hiddenOutputsBias = self.addBias(hiddenOutputs)  # Add bias
+        hiddenInput2 = np.dot(
+            self.hiddenLayer, hiddenOutputsBias)  # Apply weights
+        hiddenOutputs2 = self.activate(hiddenInput2)  # Apply activation
 
         # Output layer
         hiddenOutputsBias2 = self.addBias(hiddenOutputs2)
@@ -45,7 +52,8 @@ class Network:
         # 1. If we randomly choose to mutate a variable, than lets do it otherwise...
         # 2. Make sure that the value is between -1 and 1
         # 3. If value is between -1 and 1, than just return it, it's fine
-        mutateFunc = lambda i: random.gauss()/5 if (random.random() < rate) else 1 if i > 1 else -1 if i < -1 else i
+        def mutateFunc(i): return random.gauss()/5 if (random.random()
+                                                       < rate) else 1 if i > 1 else -1 if i < -1 else i
         self.inputLayer = np.vectorize(mutateFunc)(self.inputLayer)
         self.hiddenLayer = np.vectorize(mutateFunc)(self.hiddenLayer)
         self.outputLayer = np.vectorize(mutateFunc)(self.outputLayer)
@@ -58,9 +66,12 @@ class Network:
         returns new child Network created from both networks
         """
         child = Network(self.inputNodes, self.hiddenNodes, self.outputNodes)
-        child.inputLayer = self.applyCrossover(self.inputLayer, partnerNetwork.inputLayer)
-        child.hiddenLayer = self.applyCrossover(self.hiddenLayer, partnerNetwork.hiddenLayer)
-        child.outputLayer = self.applyCrossover(self.outputLayer, partnerNetwork.outputLayer)
+        child.inputLayer = self.applyCrossover(
+            self.inputLayer, partnerNetwork.inputLayer)
+        child.hiddenLayer = self.applyCrossover(
+            self.hiddenLayer, partnerNetwork.hiddenLayer)
+        child.outputLayer = self.applyCrossover(
+            self.outputLayer, partnerNetwork.outputLayer)
         return child
 
     def applyCrossover(self, m1, m2):
@@ -83,7 +94,7 @@ class Network:
         """
         shape = input.shape
         newInput = np.ones((shape[0], shape[1] + 1))
-        newInput[:,:-1] = input
+        newInput[:, :-1] = input
         return newInput
 
     def activate(self, inputs):
@@ -92,7 +103,9 @@ class Network:
 
         returns the activation of all the elements np.float32[][]
         """
-        sigmoid = lambda i: 1 / (1 + pow(Math.E, -i))
+        def sigmoid(i): return 1 / (1 + pow(math.e, -i))
         return np.vectorize(sigmoid)(inputs)
 
-
+    def save(self, filename):
+        data = np.array(self.inputLayer, self.hiddenLayer, self.outputLayer)
+        data.dump(filename)
