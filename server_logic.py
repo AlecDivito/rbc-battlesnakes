@@ -27,14 +27,10 @@ class State:
 
         This function returns nothing
         """
-        with open("test.txt", "a") as myfile:
-            myfile.write('new game')
-            if self.train is True:
-                myfile.write('create snake')
-                self.population.create_snake(id)
-            else:
-                myfile.write('random game')
-                self.world[id] = Game()
+        if self.train is True:
+            self.population.create_snake(id)
+        else:
+            self.world[id] = Game()
 
     def move(self, id, data):
         """
@@ -63,7 +59,6 @@ class State:
     def evolve(self):
         if self.train is True:
             self.population.evolve()
-            self.population.save_best()
         else:
             raise ValueError(
                 'You can\'t evolve the network without it being in train mode.')

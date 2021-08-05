@@ -2,19 +2,101 @@ import math
 import numpy as np
 import random
 
+def sigmoid(Z):
+    return 1/(1+np.exp(-Z))
+
+def relu(Z):
+    return np.maximum(0,Z)
+
+def sigmoid_backward(dA, Z):
+    sig = sigmoid(Z)
+    return dA * sig * (1 - sig)
+
+def relu_backward(dA, Z):
+    dZ = np.array(dA, copy = True)
+    dZ[Z <= 0] = 0
+    return dZ
+
+def softmax(self, x):
+    exps = np.exp(x - x.max())
+    return exps / np.sum(exps, axis=0)
+
+class Layer:
+    def __init__(self, data, func) -> None:
+        self.data = data
+        self.func = func
+
+    def crossover(self, other):
+        """
+        Merge 2 matrixese together
+
+        returns the result of the merging operation
+        """
+        randColumn = np.random.randint(1, self.data.shape[0])
+        randRow = np.random.randint(1, self.data.shape[1])
+        result = self.data
+        result[:randColumn][:randRow] = other.data[:randColumn][:randRow]
+        return result
 
 class Network:
 
-    def __init__(self, inputNodes, hiddenNodes, outputNodes) -> None:
-        self.inputNodes = inputNodes
-        self.hiddenNodes = hiddenNodes
-        self.outputNodes = outputNodes
-        self.inputLayer = np.random.rand(
-            hiddenNodes, inputNodes) * np.sqrt(1. / inputNodes)
-        self.hiddenLayer = np.random.rand(
-            hiddenNodes, hiddenNodes) * np.sqrt(1. / hiddenNodes)
-        self.outputLayer = np.random.rand(
-            outputNodes, hiddenNodes) * np.sqrt(1. / outputNodes)
+    def __init__(self, layers) -> None:
+        """
+        An array of tuples is passed in, defining the network:
+        - [0]: The number of inputs into that layer
+        - [1]: The activation function to apply to that layer
+        """
+        self.number_of_layers = len(layers)
+        self.layers = layers
+        self.values = {}
+
+        for index, (input, layer) in enumerate(layers):
+            layer_index = index
+            layer_input_size = input
+            layer_function = layer
+            if index + 1 == len(layers):
+                # if this is the last one
+                layer_output_size = layers[index][0]
+            else:
+                layer_output_size = layers[index + 1][0]
+
+            self.values['W{}'.format(layer_index)] = Layer(
+                data=np.random.randn(layer_output_size, layer_input_size) * 0.1,
+                func=layer_function,
+            )
+            self.values['b{}'.format(layer_index)] = Layer(
+                data=np.random.randn(layer_output_size) * 0.1,
+                func=layer_function
+            )
+
+    def print_network(self):
+        for index in range(self.number_of_layers):
+            print(self.values['W{}'.format(index)].data.shape, self.values['W{}'.format(index)].func)
+
+    def single_layer_forward_propagation(self, activation, weight, bias, func):
+        z = np.dot(weight, activation) + bias
+        if func == "relu":
+            return relu(z), z
+        elif func == "sigmoid":
+            return sigmoid(z), z
+        else:
+            raise Exception('Non-supported activation function')
+
+    def full_forward_propagation(self, input):
+        memory = {}
+        current = input
+        for index in range(self.number_of_layers):
+            previous = current
+            weights = self.values['W{}'.format(index)].data
+            func = self.values['W{}'.format(index)].func
+            bias = self.values['b{}'.format(index)].data
+            current, output = self.single_layer_forward_propagation(previous, weights, bias, func)
+            # print('dot({}, {}) + {} = ({}, {})'.format(previous.shape, weights.shape, bias.shape, current.shape, output.shape))
+
+            memory["A".format(index)] = previous
+            memory["Z".format(index)] = output
+
+        return current, memory
 
     def calculateOutput(self, inputs):
         """
@@ -22,48 +104,10 @@ class Network:
 
         returns array of floats
         """
-        # Input layer -> hidden layer
-        # inputBais = self.addBias(inputs)  # Add bias
-        # Apply layer one weights to the inputs
-        hiddenInput = np.dot(self.inputLayer, inputs)
-        hiddenOutputs = self.activate(hiddenInput)  # Apply activation function
-
-        # Hidden layer -> output layer
-        # hiddenOutputsBias = self.addBias(hiddenOutputs)  # Add bias
-        hiddenInput2 = np.dot(
-            self.hiddenLayer, hiddenOutputs)  # Apply weights
-        hiddenOutputs2 = self.activate(hiddenInput2)  # Apply activation
-
-        # Output layer
-        # hiddenOutputsBias2 = self.addBias(hiddenOutputs2)
-        outputInputs = np.dot(self.outputLayer, hiddenOutputs2)
-        outputs = self.activate(outputInputs)
-
-        return np.squeeze(np.asarray(outputs))
-
-    def addBias(self, input):
-        """
-        Takes matrix of floats: np.float32[][]
-
-        returns the matrix with one extra column of 1's
-        """
-        shape = input.shape
-        newInput = np.ones((shape[0], 1))
-        newInput[:, :-1] = input
-        return newInput
-
-    def activate(self, inputs):
-        """
-        Takes matrix of floats: np.float32[][]
-
-        returns the activation of all the elements np.float32[][]
-        """
-        def sigmoid(i): return 1 / (1 + pow(math.e, -i))
-        return np.vectorize(sigmoid)(inputs)
-
-    def softmax(self, x):
-        exps = np.exp(x - x.max())
-        return exps / np.sum(exps, axis=0)
+        current, _ = self.full_forward_propagation(inputs)
+        output = np.squeeze(np.asarray(current))
+        # print(output)
+        return output
 
     def mutate(self, rate):
         """
@@ -76,11 +120,11 @@ class Network:
         # 1. If we randomly choose to mutate a variable, than lets do it otherwise...
         # 2. Make sure that the value is between -1 and 1
         # 3. If value is between -1 and 1, than just return it, it's fine
-        def mutateFunc(i): return random.random() if (random.random()
-                                                      < rate) else 1 if i > 1 else -1 if i < -1 else i
-        self.inputLayer = np.vectorize(mutateFunc)(self.inputLayer)
-        self.hiddenLayer = np.vectorize(mutateFunc)(self.hiddenLayer)
-        self.outputLayer = np.vectorize(mutateFunc)(self.outputLayer)
+        for index in range(self.number_of_layers):
+            data = self.values['W{}'.format(index)].data
+            for (x,y), _ in np.ndenumerate(data):
+                if (random.random() < rate):
+                    data[x][y] = random.random()
 
     def crossover(self, partnerNetwork):
         """
@@ -89,28 +133,13 @@ class Network:
 
         returns new child Network created from both networks
         """
-        child = Network(self.inputNodes, self.hiddenNodes, self.outputNodes)
-        child.inputLayer = self.applyCrossover(
-            self.inputLayer, partnerNetwork.inputLayer)
-        child.hiddenLayer = self.applyCrossover(
-            self.hiddenLayer, partnerNetwork.hiddenLayer)
-        child.outputLayer = self.applyCrossover(
-            self.outputLayer, partnerNetwork.outputLayer)
+        child = Network(self.layers)
+        for index in range(self.number_of_layers):
+            me = self.values['W{}'.format(index)]
+            partner = partnerNetwork.values['W{}'.format(index)]
+            child.values['W{}'.format(index)].data = me.crossover(partner)
         return child
 
-    def applyCrossover(self, m1, m2):
-        """
-        Merge 2 matrixese together
-
-        returns the result of the merging operation
-        """
-        randColumn = np.random.randint(1, m1.shape[0])
-        randRow = np.random.randint(1, m1.shape[1])
-        result = m1
-        result[:randColumn][:randRow] = m2[:randColumn][:randRow]
-        return result
-
     def save(self, path):
-        self.inputLayer.dump("{}/{}".format(path, "input.dat"))
-        self.hiddenLayer.dump("{}/{}".format(path, "hidden.dat"))
-        self.outputLayer.dump("{}/{}".format(path, "output.dat"))
+        for index in range(self.number_of_layers):
+            self.values['W{}'.format(index)].data.dump("{}/{}".format(path, "W{}.dat".format(index)))

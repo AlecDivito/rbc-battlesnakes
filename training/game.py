@@ -6,6 +6,7 @@ class Game:
 
     def __init__(self, snake) -> None:
         self.snake = snake
+        self.moves = []
 
     def tick(self, data):
         game_board = data['board']
@@ -17,8 +18,6 @@ class Game:
         turn = data['turn']
         health = you['health']
         length = you['length']
-
-        (data)
 
         # 1. initialize the boards full of zeros
         board = np.zeros((game_board['width'], game_board['height']))
@@ -53,4 +52,8 @@ class Game:
         # Send the move to the snake
         next_move = self.snake.tick(turn, health, length, inputBoard)
         possible_moves = ["up", "down", "left", "right"]
+        self.moves.append(possible_moves[next_move])
         return possible_moves[next_move]
+
+    def output_snake_history(self, id, gen, index):
+        print("{} - {} -> {}".format(gen, index, self.moves))

@@ -46,6 +46,7 @@ class Population:
                 self.create_snake(id)
 
     def snake_died(self, id):
+        self.snake_games[id].output_snake_history(id, self.generation, len(self.snake_games))
         self.aliveSnakeIds.remove(id)
         self.deadSnakeIds.append(id)
 
@@ -65,6 +66,7 @@ class Population:
             self.global_best_snake = self.best_snake
         if self.best_snake.fitness > self.global_best_snake.fitness:
             self.global_best_snake = self.best_snake
+            self.global_best_snake.save_to_file(self.generation)
 
         # Create an evolution queue
         if evolve_by is Evolution.SELECTION:
@@ -77,9 +79,6 @@ class Population:
         self.aliveSnakeIds = []
         self.deadSnakeIds = []
         self.snake_games = {}
-
-    def save_best(self):
-        self.best_snake.save_to_file(self.generation)
 
     def mutate(self):
         for key in self.snake_games:
@@ -146,9 +145,9 @@ class Population:
 
     def __evolve_by_best_snake(self):
         next_generation_snakes = []
-        for _ in self.population_size:
+        for _ in range(self.population_size):
             # select 2 parents by fitness
-            best_snake = BestSnake(self.best_snake)
-            best_snake[0].mutate(mutation_rate)
-            next_generation_snakes.append(best_snake[0])
+            best_snake = self.best_snake
+            best_snake.mutate(mutation_rate)
+            next_generation_snakes.append(best_snake)
         return next_generation_snakes

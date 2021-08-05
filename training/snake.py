@@ -11,7 +11,16 @@ class Snake:
         self.length = 0  # The current length of the snake
         self.turn = 0  # The current turn
         self.fitness = 0  # The current fitness score
-        self.network = Network(board_x * board_y, board_x * board_y, 4)
+        input_board = board_x * board_y
+        nn = [
+            (input_board, "relu"),
+            (floor(input_board / 4 * 3), "relu"),
+            (floor(input_board / 2), "relu"),
+            (floor(input_board / 4), "relu"),
+            (4, "sigmoid")
+        ]
+        self.network = Network(nn)
+        self.moves = []
 
     def tick(self, turn, health, length, inputBoard):
         """
@@ -23,7 +32,9 @@ class Snake:
         self.length = length
         self.turn = turn
         decision = self.network.calculateOutput(inputBoard)
-        return decision.argmax()
+        index = decision.argmax()
+        self.moves.append(index)
+        return index
 
     def calculateFitness(self):
         """
@@ -32,13 +43,16 @@ class Snake:
 
         Returns a number
         """
-        fitness = self.turn * self.turn
-        if (self.length < 10):
-            fitness = floor(fitness * pow(2, floor(self.length)))
+        if (all(x == self.moves[0] for x in self.moves)):
+            self.fitness = 0
         else:
-            fitness *= pow(2, 10)
-            fitness *= (self.length - 9)
-        self.fitness = fitness
+            fitness = self.turn * self.turn
+            if (self.length < 10):
+                fitness = floor(fitness * pow(2, floor(self.length)))
+            else:
+                fitness *= pow(2, 10)
+                fitness *= (self.length - 9)
+            self.fitness = fitness
 
     def mutate(self, rate):
         self.network.mutate(rate)

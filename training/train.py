@@ -24,7 +24,7 @@ class Trainer(threading.Thread):
         """
         next_count = self.counter.increment()
         while next_count < self.max_iterations:
-            print("Thread {}: Running iteration {}".format(self.name, next_count))
+            # print("Thread {}: Running iteration {}".format(self.name, next_count))
             subprocess.run(self.cmd, stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL, capture_output=False, text=False)
             next_count = self.counter.increment()

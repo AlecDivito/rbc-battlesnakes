@@ -26,7 +26,6 @@ def handle_info():
 
     TIP: If you open your Battlesnake URL in browser you should see this data.
     """
-    print("INFO")
     return {
         "apiversion": "1",
         "author": "alecdivito",
@@ -69,7 +68,7 @@ def end():
 
 
 if __name__ == "__main__":
-    logging.getLogger("werkzeug").setLevel(logging.DEBUG)
+    logging.getLogger("werkzeug").setLevel(logging.ERROR)
     print("Starting Battlesnake Server...")
     port = int(os.environ.get("PORT", "8080"))
 
@@ -92,7 +91,7 @@ if __name__ == "__main__":
         counter = AtomicCounter()
         trainers = []
         for index in range(1):
-            thread = Trainer(index, command, counter, 100, False)
+            thread = Trainer(index, command, counter, 250, False)
             thread.start()
             trainers.append(thread)
 

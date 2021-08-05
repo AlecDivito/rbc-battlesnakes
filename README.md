@@ -64,7 +64,7 @@ To get the project running locally:
 Once the project has successfully been installed, we can run it:
 
 1. Start the server: `python3 server.py`
-2. Run a game of battlesnakes: `./battlesnake play --url localhost:8080 -g solo -v`
+2. Run a game of battlesnakes: `./battlesnake play --url http://localhost:8080 -g solo -v`
 
 ### Production Development
 
