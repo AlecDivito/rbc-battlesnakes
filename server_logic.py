@@ -16,9 +16,9 @@ class State:
     def __init__(self) -> None:
         self.world = {}
         self.population = Population(100)
-        self.train = False
+        self.train = True
 
-    def set_training(self, train=False):
+    def set_training(self, train=True):
         self.train = train
 
     def newGame(self, id):
@@ -27,10 +27,14 @@ class State:
 
         This function returns nothing
         """
-        if self.train is True:
-            self.population.create_snake(id)
-        else:
-            self.world[id] = Game()
+        with open("test.txt", "a") as myfile:
+            myfile.write('new game')
+            if self.train is True:
+                myfile.write('create snake')
+                self.population.create_snake(id)
+            else:
+                myfile.write('random game')
+                self.world[id] = Game()
 
     def move(self, id, data):
         """
@@ -55,3 +59,11 @@ class State:
             self.population.snake_died(id)
         else:
             del self.world[id]
+
+    def evolve(self):
+        if self.train is True:
+            self.population.evolve()
+            self.population.save_best()
+        else:
+            raise ValueError(
+                'You can\'t evolve the network without it being in train mode.')

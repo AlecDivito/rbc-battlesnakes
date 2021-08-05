@@ -10,11 +10,11 @@ class Network:
         self.hiddenNodes = hiddenNodes
         self.outputNodes = outputNodes
         self.inputLayer = np.random.rand(
-            hiddenNodes, inputNodes + 1, dtype=np.float32)
+            hiddenNodes, inputNodes) * np.sqrt(1. / inputNodes)
         self.hiddenLayer = np.random.rand(
-            hiddenNodes, hiddenNodes + 1, dtype=np.float32)
+            hiddenNodes, hiddenNodes) * np.sqrt(1. / hiddenNodes)
         self.outputLayer = np.random.rand(
-            outputNodes, hiddenNodes + 1, dtype=np.float32)
+            outputNodes, hiddenNodes) * np.sqrt(1. / outputNodes)
 
     def calculateOutput(self, inputs):
         """
@@ -23,23 +23,47 @@ class Network:
         returns array of floats
         """
         # Input layer -> hidden layer
-        inputBais = self.addBias(inputs)  # Add bias
+        # inputBais = self.addBias(inputs)  # Add bias
         # Apply layer one weights to the inputs
-        hiddenInput = np.dot(self.inputLayer, [inputBais])
+        hiddenInput = np.dot(self.inputLayer, inputs)
         hiddenOutputs = self.activate(hiddenInput)  # Apply activation function
 
         # Hidden layer -> output layer
-        hiddenOutputsBias = self.addBias(hiddenOutputs)  # Add bias
+        # hiddenOutputsBias = self.addBias(hiddenOutputs)  # Add bias
         hiddenInput2 = np.dot(
-            self.hiddenLayer, hiddenOutputsBias)  # Apply weights
+            self.hiddenLayer, hiddenOutputs)  # Apply weights
         hiddenOutputs2 = self.activate(hiddenInput2)  # Apply activation
 
         # Output layer
-        hiddenOutputsBias2 = self.addBias(hiddenOutputs2)
-        outputInputs = np.dot(self.outputLayer, hiddenOutputsBias2)
+        # hiddenOutputsBias2 = self.addBias(hiddenOutputs2)
+        outputInputs = np.dot(self.outputLayer, hiddenOutputs2)
         outputs = self.activate(outputInputs)
 
         return np.squeeze(np.asarray(outputs))
+
+    def addBias(self, input):
+        """
+        Takes matrix of floats: np.float32[][]
+
+        returns the matrix with one extra column of 1's
+        """
+        shape = input.shape
+        newInput = np.ones((shape[0], 1))
+        newInput[:, :-1] = input
+        return newInput
+
+    def activate(self, inputs):
+        """
+        Takes matrix of floats: np.float32[][]
+
+        returns the activation of all the elements np.float32[][]
+        """
+        def sigmoid(i): return 1 / (1 + pow(math.e, -i))
+        return np.vectorize(sigmoid)(inputs)
+
+    def softmax(self, x):
+        exps = np.exp(x - x.max())
+        return exps / np.sum(exps, axis=0)
 
     def mutate(self, rate):
         """
@@ -52,8 +76,8 @@ class Network:
         # 1. If we randomly choose to mutate a variable, than lets do it otherwise...
         # 2. Make sure that the value is between -1 and 1
         # 3. If value is between -1 and 1, than just return it, it's fine
-        def mutateFunc(i): return random.gauss()/5 if (random.random()
-                                                       < rate) else 1 if i > 1 else -1 if i < -1 else i
+        def mutateFunc(i): return random.random() if (random.random()
+                                                      < rate) else 1 if i > 1 else -1 if i < -1 else i
         self.inputLayer = np.vectorize(mutateFunc)(self.inputLayer)
         self.hiddenLayer = np.vectorize(mutateFunc)(self.hiddenLayer)
         self.outputLayer = np.vectorize(mutateFunc)(self.outputLayer)
@@ -86,26 +110,7 @@ class Network:
         result[:randColumn][:randRow] = m2[:randColumn][:randRow]
         return result
 
-    def addBias(self, input):
-        """
-        Takes matrix of floats: np.float32[][]
-
-        returns the matrix with one extra column of 1's
-        """
-        shape = input.shape
-        newInput = np.ones((shape[0], shape[1] + 1))
-        newInput[:, :-1] = input
-        return newInput
-
-    def activate(self, inputs):
-        """
-        Takes matrix of floats: np.float32[][]
-
-        returns the activation of all the elements np.float32[][]
-        """
-        def sigmoid(i): return 1 / (1 + pow(math.e, -i))
-        return np.vectorize(sigmoid)(inputs)
-
-    def save(self, filename):
-        data = np.array(self.inputLayer, self.hiddenLayer, self.outputLayer)
-        data.dump(filename)
+    def save(self, path):
+        self.inputLayer.dump("{}/{}".format(path, "input.dat"))
+        self.hiddenLayer.dump("{}/{}".format(path, "hidden.dat"))
+        self.outputLayer.dump("{}/{}".format(path, "output.dat"))

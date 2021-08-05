@@ -1,5 +1,6 @@
 import logging
 import os
+import threading
 from training.train import AtomicCounter, Trainer
 from training.snake import Snake
 from os import environ
@@ -53,7 +54,7 @@ def handle_move():
     Valid moves are "up", "down", "left", or "right".
     """
     data = request.get_json()
-    return {"move": state.move(data["game"]["id"])}
+    return {"move": state.move(data["game"]["id"], data)}
 
 
 @app.post("/end")
@@ -68,31 +69,47 @@ def end():
 
 
 if __name__ == "__main__":
-    logging.getLogger("werkzeug").setLevel(logging.ERROR)
+    logging.getLogger("werkzeug").setLevel(logging.DEBUG)
     print("Starting Battlesnake Server...")
     port = int(os.environ.get("PORT", "8080"))
-    app.run(host="0.0.0.0", port=port, debug=True)
 
-    if "BUILD_SNAKE_NETWORK" in os.environ:
-        # Start running the training script
-        print("Starting training network")
-        print("This testing script will fork the battlesnake binary multiple times and test it on your snake")
-        state.set_training(True)
-        command = "./battlesnake play --url localhost:8080 -g solo -v"
+    # if "BUILD_SNAKE_NETWORK" in os.environ:
+    # Start running the training script
+    print("Starting training network")
+    print("This testing script will fork the battlesnake binary multiple times and test it on your snake")
+    # logging.disabled = True
+    # app.logger.disabled = True
+    state.set_training(True)
+    # app.run(host="0.0.0.0", port=port, debug=False)
+
+    kwargs = {'host': '0.0.0.0', 'port': port,
+              'threaded': True, 'use_reloader': False, 'debug': False}
+    flask_thread = threading.Thread(
+        target=app.run, daemon=True, kwargs=kwargs)
+    flask_thread.start()
+    command = "./battlesnake play --url http://localhost:8080 -g solo -v"
+    for _ in range(100):
         counter = AtomicCounter()
         trainers = []
-        for index in range(6):
-            thread = Trainer(command, counter, 100)
+        for index in range(1):
+            thread = Trainer(index, command, counter, 100, False)
             thread.start()
             trainers.append(thread)
 
         for thread in trainers:
             thread.join()
-    else:
-        # Load all of the script files
-        print("This function is currently not supportted")
-        print("TODO:")
-        print("Make sure that the neural network is saved after each generation")
-        print("Using a folder, open that up and use the best network there")
-        print("Will be implemented later")
-        state.set_training(False)
+        print("evolve")
+        state.evolve()
+
+    print("Training finished")
+    flask_thread.join()
+
+    # else:
+    #     # Load all of the script files
+    #     print("This function is currently not supportted")
+    #     print("TODO:")
+    #     print("Make sure that the neural network is saved after each generation")
+    #     print("Using a folder, open that up and use the best network there")
+    #     print("Will be implemented later")
+    #     state.set_training(False)
+    #     app.run(host="0.0.0.0", port=port, debug=False)

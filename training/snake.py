@@ -1,6 +1,7 @@
 
 from math import floor
 from training.network import Network
+import os
 
 
 class Snake:
@@ -49,6 +50,6 @@ class Snake:
 
     def save_to_file(self, generation):
         self.calculateFitness()
-        filename = "./network/gen:{}-fitness:{}.dat".format(
-            generation, self.fitness)
-        self.network.save(filename)
+        path = "./network/gen:{}-fitness:{}".format(generation, self.fitness)
+        os.makedirs(path, exist_ok=True)
+        self.network.save(path)

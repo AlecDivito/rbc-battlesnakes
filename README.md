@@ -10,6 +10,32 @@ be cool to create a generic algorithm that will be able to compete against other
 snakes. SO I'm going to do that. No planning, just plain trust AI that it will
 win me the competition.
 
+## Training the network
+
+This programs has 2 ways to run:
+
+1. Run the program that will run and build the snake neural network
+2. Run the best snake from a stored neural network
+
+To train the snake, run the following:
+
+**NOTE**: To train the network, we require that the local battlesnake binary is
+compiled and is in your local directory. If it can not be found, this won't work
+and an error will show. 
+
+```bash
+BUILD_SNAKE_NETWORK="true" python3 server.py
+```
+
+To run the snake, run the following:
+
+**NOTE**: For this to work successfully, it is required for a folder called
+__networks__ is in your working directory with at least one saved network there.
+
+```bash
+python3 server.py
+```
+
 ## Development
 
 I could re-code their server and stuff like that but that stuff takes time and

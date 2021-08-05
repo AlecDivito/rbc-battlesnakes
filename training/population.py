@@ -94,7 +94,7 @@ class Population:
         # Get list of snakes id, sorted by fitness
         sorted_snakes_by_fitness = self.__get_sorted_fitness_array()
 
-        return self.snake_games[sorted_snakes_by_fitness[-1][0]].snake
+        return self.snake_games[sorted_snakes_by_fitness[len(sorted_snakes_by_fitness)-1][0]].snake
 
     def select_snake(self):
         """
@@ -125,15 +125,15 @@ class Population:
 
     def __get_sorted_fitness_array(self):
         fitness_array = []
-        for _, key in enumerate(self.deadSnakeIds):
-            snake = self.snake_games[key].snake
-            snake.calculateFitness()
-            fitness_array.append((key, snake.fitness))
+        for key in self.snake_games:
+            game = self.snake_games[key]
+            game.snake.calculateFitness()
+            fitness_array.append((key, game.snake.fitness))
         return sorted(fitness_array, key=lambda i: i[1])
 
     def __evolve_by_random_selection(self):
         next_generation_snakes = []
-        for _ in self.population_size:
+        for _ in range(self.population_size):
             # select 2 parents by fitness
             parent1 = self.select_snake()
             parent2 = self.select_snake()
