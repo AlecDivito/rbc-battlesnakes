@@ -27,15 +27,15 @@ class Game:
             board[food['x']][food['y']] = BoardItem.FOOD.value
 
         # 3. set all of the hazards on the board
-        for hazard in hazards:
-            board[hazard['x']][hazard['y']] = BoardItem.HAZARD.value
+        # for hazard in hazards:
+        #     board[hazard['x']][hazard['y']] = BoardItem.HAZARD.value
 
         # 4. set enemy snakes and snake heads
-        for snake in snakes:
-            for body in snake['body']:
-                board[body['x']][body['y']] = BoardItem.ENEMY_SNAKE.value
-            board[snake['head']['x']][snake['head']
-                                      ['y']] = BoardItem.ENEMY_SNAKE_HEAD.value
+        # for snake in snakes:
+        #     for body in snake['body']:
+        #         board[body['x']][body['y']] = BoardItem.ENEMY_SNAKE.value
+        #     board[snake['head']['x']][snake['head']
+        #                               ['y']] = BoardItem.ENEMY_SNAKE_HEAD.value
 
         # 5. set friendly snake and head
         for body in you['body']:

@@ -44,7 +44,7 @@ class Snake:
         Returns a number
         """
         if (all(x == self.moves[0] for x in self.moves)):
-            self.fitness = 0
+            self.fitness = 1
         else:
             fitness = self.turn * self.turn
             if (self.length < 10):

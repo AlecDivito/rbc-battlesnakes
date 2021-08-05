@@ -8,7 +8,7 @@ class Evolution(Enum):
 
 class BoardItem(Enum):
     EMPTY = 0.0
-    FOOD = 1.0
+    FOOD = 6.0
     HAZARD = 2.0
     ENEMY_SNAKE = 3.0
     ENEMY_SNAKE_HEAD = 4.0
