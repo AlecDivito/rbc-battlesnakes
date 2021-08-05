@@ -65,7 +65,7 @@ class Network:
                 func=layer_function,
             )
             self.values['b{}'.format(layer_index)] = Layer(
-                data=np.random.randn(layer_output_size) * 0.1,
+                data=np.ones(layer_output_size) * 0.1,
                 func=layer_function
             )
 
