@@ -17,6 +17,7 @@ win me the competition.
 |  [x]  | Working neural network code                                                                                              |
 |  [x]  | Training logic needed to train the snake                                                                                 |
 |  [ ]  | Modify network to take categorical data instead of decimals                                                              |
+|  [ ]  | Modify training to work with multiple snakes (should be already done)                                                    |
 |  [ ]  | Add ability to run snake using saved network                                                                             |
 |  [ ]  | Add ability to start training from an existing network                                                                   |
 |  [ ]  | Remove all __"magic"__ numbers, convert them all to environment variables                                                |
