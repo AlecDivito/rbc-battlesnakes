@@ -2,24 +2,19 @@ import math
 import numpy as np
 import random
 
-def sigmoid(Z):
-    return 1/(1+np.exp(-Z))
+
+def sigmoid(x):
+    return 1 / (1 + math.exp(-x))
+
 
 def relu(Z):
-    return np.maximum(0,Z)
+    return np.maximum(0, Z)
 
-def sigmoid_backward(dA, Z):
-    sig = sigmoid(Z)
-    return dA * sig * (1 - sig)
 
-def relu_backward(dA, Z):
-    dZ = np.array(dA, copy = True)
-    dZ[Z <= 0] = 0
-    return dZ
-
-def softmax(self, x):
+def softmax(x):
     exps = np.exp(x - x.max())
     return exps / np.sum(exps, axis=0)
+
 
 class Layer:
     def __init__(self, data, func) -> None:
@@ -37,6 +32,7 @@ class Layer:
         result = self.data
         result[:randColumn][:randRow] = other.data[:randColumn][:randRow]
         return result
+
 
 class Network:
 
@@ -61,7 +57,8 @@ class Network:
                 layer_output_size = layers[index + 1][0]
 
             self.values['W{}'.format(layer_index)] = Layer(
-                data=np.random.randn(layer_output_size, layer_input_size) * 0.1,
+                data=np.random.randn(
+                    layer_output_size, layer_input_size) * 0.1,
                 func=layer_function,
             )
             self.values['b{}'.format(layer_index)] = Layer(
@@ -71,7 +68,8 @@ class Network:
 
     def print_network(self):
         for index in range(self.number_of_layers):
-            print(self.values['W{}'.format(index)].data.shape, self.values['W{}'.format(index)].func)
+            print(self.values['W{}'.format(index)].data.shape,
+                  self.values['W{}'.format(index)].func)
 
     def single_layer_forward_propagation(self, activation, weight, bias, func):
         z = np.dot(weight, activation) + bias
@@ -90,7 +88,8 @@ class Network:
             weights = self.values['W{}'.format(index)].data
             func = self.values['W{}'.format(index)].func
             bias = self.values['b{}'.format(index)].data
-            current, output = self.single_layer_forward_propagation(previous, weights, bias, func)
+            current, output = self.single_layer_forward_propagation(
+                previous, weights, bias, func)
             # print('dot({}, {}) + {} = ({}, {})'.format(previous.shape, weights.shape, bias.shape, current.shape, output.shape))
 
             memory["A".format(index)] = previous
@@ -122,7 +121,7 @@ class Network:
         # 3. If value is between -1 and 1, than just return it, it's fine
         for index in range(self.number_of_layers):
             data = self.values['W{}'.format(index)].data
-            for (x,y), _ in np.ndenumerate(data):
+            for (x, y), _ in np.ndenumerate(data):
                 if (random.random() < rate):
                     data[x][y] = random.random()
 
@@ -142,4 +141,5 @@ class Network:
 
     def save(self, path):
         for index in range(self.number_of_layers):
-            self.values['W{}'.format(index)].data.dump("{}/{}".format(path, "W{}.dat".format(index)))
+            self.values['W{}'.format(index)].data.dump(
+                "{}/{}".format(path, "W{}.dat".format(index)))
