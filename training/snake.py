@@ -43,16 +43,20 @@ class Snake:
 
         Returns a number
         """
-        if (all(x == self.moves[0] for x in self.moves)):
-            self.fitness = 1
-        else:
-            fitness = self.turn * self.turn
-            if (self.length < 10):
-                fitness = floor(fitness * pow(2, floor(self.length)))
+        fitness = self.turn * self.turn
+        if (self.turn < 10 or self.length < 10):
+            # If all of the moves are the same
+            if (all(x == self.moves[0] for x in self.moves)):
+                self.fitness = 1
+            # If they are not the same, git it the correct score
             else:
-                fitness *= pow(2, 10)
-                fitness *= (self.length - 9)
-            self.fitness = fitness
+                fitness = floor(fitness * pow(2, floor(self.length)))
+        else:
+            # Finally, if the snake is able to live for many turns and is long,
+            # give it a large reward
+            fitness *= pow(2, 10)
+            fitness *= (self.length - 9)
+        self.fitness = fitness
 
     def mutate(self, rate):
         self.network.mutate(rate)
