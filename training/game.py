@@ -8,6 +8,11 @@ class Game:
         self.snake = snake
         self.moves = []
 
+    def clone(self) -> None:
+        game = Game(self.snake.clone())
+        game.moves = self.moves
+        return game
+
     def tick(self, data):
         game_board = data['board']
         foods = game_board['food']
@@ -50,6 +55,3 @@ class Game:
         self.moves.append(possible_moves[next_move])
         return possible_moves[next_move]
 
-    def output_snake_history(self, id, gen, index):
-        print("{}: {} - {} -> {} = {}".format(id, gen,
-              index, self.moves, self.snake.moves))  # , self.snake.decisions))

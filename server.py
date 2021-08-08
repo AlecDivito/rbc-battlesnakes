@@ -79,6 +79,7 @@ if __name__ == "__main__":
     # logging.disabled = True
     # app.logger.disabled = True
     state.set_training(True)
+    # state.set_initial_network("./network/gen:84-fitness:20808")
     # app.run(host="0.0.0.0", port=port, debug=False)
 
     kwargs = {'host': '0.0.0.0', 'port': port,
@@ -87,17 +88,16 @@ if __name__ == "__main__":
         target=app.run, daemon=True, kwargs=kwargs)
     flask_thread.start()
     command = "./battlesnake play --url http://localhost:8080 -g solo -v"
-    for _ in range(200):
+    for _ in range(500):
         counter = AtomicCounter()
         trainers = []
         for index in range(1):
-            thread = Trainer(index, command, counter, 150, False)
+            thread = Trainer(index, command, counter, 100, False)
             thread.start()
             trainers.append(thread)
 
         for thread in trainers:
             thread.join()
-        print("evolve")
         state.evolve()
 
     print("Training finished")

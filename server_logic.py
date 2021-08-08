@@ -21,6 +21,9 @@ class State:
     def set_training(self, train=True):
         self.train = train
 
+    def set_initial_network(self, path):
+        self.population.set_initial_network(path)
+
     def newGame(self, id):
         """
         This function takes an ID and initializes a snake for a new game.

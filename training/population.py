@@ -5,7 +5,7 @@ from training.constant import Evolution
 from training.snake import Snake
 from training.game import Game
 
-mutation_rate = 0.01
+mutation_rate = 0.05
 
 
 class BestSnake(Snake):
@@ -29,13 +29,17 @@ class Population:
 
         # List of alive and dead snakes
         # Both alive and dead snakes point to snake games
+        self.initial_network_path = None
         self.aliveSnakeIds = []
         self.deadSnakeIds = []
         self.snake_games = {}
 
+    def set_initial_network(self, path):
+        self.initial_network_path = path
+
     def create_snake(self, id):
         if self.generation == 0 and self.best_snake is None:
-            self.snake_games[id] = Game(Snake(11, 11))
+            self.snake_games[id] = Game(Snake(11, 11, self.initial_network_path, 5))
             self.aliveSnakeIds.append(id)
             self.population_size = self.population_size + 1
         else:
@@ -48,8 +52,6 @@ class Population:
                 self.create_snake(id)
 
     def snake_died(self, id, data):
-        self.snake_games[id].output_snake_history(
-            id, self.generation, len(self.snake_games))
         self.snake_games[id].snake.last_tick(data)
         self.aliveSnakeIds.remove(id)
         self.deadSnakeIds.append(id)
@@ -64,13 +66,18 @@ class Population:
 
         This method resets the current population
         """
+        print(len(self.current_gen_snake_queue))
+        print(len(self.deadSnakeIds))
         # Find the best snake
         self.best_snake = self.find_best_snake()
+        print("Evolving Gen {}: best fitness = {} living {} turns with a length of {} and died by (Eat:{},OutOfBounds:{})".format(self.generation, self.best_snake.fitness, self.best_snake.turn, self.best_snake.length, self.best_snake.death_by_body, self.best_snake.death_by_wall))
         if self.global_best_snake is None:
             self.global_best_snake = self.best_snake
-        if self.best_snake.fitness > self.global_best_snake.fitness:
+        if self.best_snake.fitness >= self.global_best_snake.fitness:
+            print("New best! {} > {}".format(self.best_snake.fitness, self.global_best_snake.fitness))
             self.global_best_snake = self.best_snake
-            self.global_best_snake.save_to_file(self.generation)
+            if self.global_best_snake.fitness > 9999:
+                self.global_best_snake.save_to_file(self.generation)
 
         # Create an evolution queue
         if evolve_by is Evolution.SELECTION:
@@ -97,7 +104,9 @@ class Population:
         # Get list of snakes id, sorted by fitness
         sorted_snakes_by_fitness = self.__get_sorted_fitness_array()
         with open("./temp/{}.txt".format(self.generation), "w") as file:
-            file.write("{}".format(sorted_snakes_by_fitness))
+            for (key, fitness) in sorted_snakes_by_fitness:
+                game = self.snake_games[key]
+                file.write("{} -> {} = {} or {}\n".format(fitness, key, game.moves, game.snake.decisions))
 
         return self.snake_games[sorted_snakes_by_fitness[len(sorted_snakes_by_fitness)-1][0]].snake
 
@@ -140,10 +149,10 @@ class Population:
         return sorted(fitness_array, key=lambda i: i[1])
 
     def __evolve_by_random_selection(self):
-        next_generation_snakes = []
-        for _ in range(self.population_size):
+        next_generation_snakes = [self.global_best_snake.clone()]
+        for _ in range(1, self.population_size):
             # select 2 parents by fitness
-            parent1 = self.best_snake
+            parent1 = self.select_snake()
             parent2 = self.select_snake()
 
             # crossover the 2 snakes to create a child

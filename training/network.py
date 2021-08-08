@@ -69,10 +69,16 @@ class Network:
                 func=layer_function
             )
 
-    # def print_network(self):
-    #     for index in range(self.number_of_layers):
-    #         print(self.values['W{}'.format(index)].data.shape,
-    #               self.values['W{}'.format(index)].func)
+    def load_network_from_path(self, path):
+        for index in range(self.number_of_layers):
+            name = 'W{}'.format(index)
+            file = '{}/{}.dat'.format(path, name)
+            self.values[name].data = np.load(file, allow_pickle=True)
+
+    def clone(self):
+        network = Network(self.layers)
+        network.values = self.values.copy()
+        return network
 
     def single_layer_forward_propagation(self, activation, weight, bias, func):
         z = np.dot(weight, activation) + bias

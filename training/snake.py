@@ -1,7 +1,6 @@
 
 from math import floor
 import numpy as np
-from numpy.core.numeric import cross
 from training.constant import BOARD_CATEGORIES, BoardItem
 from training.network import Network
 import os
@@ -26,10 +25,19 @@ def multi_point_crossover(a: np.array, b: np.array):
     a[m1:m2] = b[m1:m2]
     return a
 
+def binomial(n, k):
+    if 0 <= k <= n:
+        ntok = ktok= 1
+        for t in range(1, min(k, n - k) + 1):
+            ntok *=n; ktok *= t; n-= 1
+        return ntok // ktok
+    else: return 0
+
+def P(L, n, p): return binomial(L, n) * p**n * (1-p)**(L-n)
 
 class Snake:
 
-    def __init__(self, board_x, board_y, eye_sight=5):
+    def __init__(self, board_x, board_y, initial_network_path, eye_sight=5):
         self.board_x = board_x
         self.board_y = board_y
         self.health = 0  # The current health of the snake
@@ -45,11 +53,26 @@ class Snake:
             (floor(input_board / 4), "relu"),
             (4, "sigmoid")
         ]
+        self.network = Network(nn)
+        if initial_network_path != None:
+            self.network.load_network_from_path(initial_network_path)
         self.death_by_wall = False
         self.death_by_body = False
-        self.network = Network(nn)
         self.moves = []
         self.decisions = []
+
+    def clone(self):
+        snake = Snake(self.board_x, self.board_y, None, self.eye_sight)
+        snake.health = self.health
+        snake.length = self.length
+        snake.turn = self.turn
+        snake.fitness = self.fitness
+        snake.death_by_wall = self.death_by_wall
+        snake.death_by_body = self.death_by_body
+        snake.network = self.network.clone()
+        snake.moves = self.moves
+        snake.decisions = self.decisions
+        return snake
 
     def tick(self, turn, health, length, you, board):
         """
@@ -119,18 +142,15 @@ class Snake:
 
         Returns a number
         """
-        if self.health < 10:
-            if (self.death_by_wall == True):
-                self.fitness = 0
-            elif (self.death_by_body == True):
-                self.fitness = 0
-        # elif (all(x == self.moves[0] for x in self.moves)):
-        #     self.fitness = 0
+        if (self.death_by_wall == True):
+            self.fitness = self.turn
+        elif (self.death_by_body == True):
+            self.fitness = self.turn
         else:
-            self.fitness = floor(self.turn * (self.length - 2 ** 2))
+            self.fitness = self.turn * self.turn * (self.length - 2)
 
     def crossover_and_mutate(self, partner, mutation_rate):
-        child = Snake(self.board_x, self.board_y)
+        child = Snake(self.board_x, self.board_y, None, 5)
         # crossover
         flat_network_x = np.array(self.network.flatten())
         flat_network_y = np.array(partner.network.flatten())
