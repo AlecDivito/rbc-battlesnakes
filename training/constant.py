@@ -1,16 +1,20 @@
 from enum import Enum
 
+import numpy as np
+
 
 class Evolution(Enum):
     SELECTION = 1
     BEST = 2
 
 
-class BoardItem(Enum):
-    EMPTY = 0.0
-    FOOD = 6.0
-    HAZARD = 2.0
-    ENEMY_SNAKE = 3.0
-    ENEMY_SNAKE_HEAD = 4.0
-    FRIENDLY_SNAKE = 5.0
-    FRIENDLY_SNAKE_HEAD = 6.0
+BOARD_CATEGORIES = 3
+
+
+class BoardItem():
+    EMPTY = 0
+    ENEMYHEAD = 1
+    FOOD = 2
+    FRIENDLY_HEAD = 3
+    FRIENDLY_BODY = 4
+    OUT_OF_BOUNDS = 5

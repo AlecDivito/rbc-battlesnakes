@@ -1,6 +1,6 @@
 from training.game import Game
 from training.population import Population
-from training.constant import BoardItem
+from training.constant import BoardItem, Evolution
 import numpy as np
 
 """
@@ -15,7 +15,7 @@ class State:
 
     def __init__(self) -> None:
         self.world = {}
-        self.population = Population(100)
+        self.population = Population()
         self.train = True
 
     def set_training(self, train=True):
@@ -44,7 +44,7 @@ class State:
         else:
             return self.world[id].tick(data)
 
-    def endGame(self, id):
+    def endGame(self, id, data):
         """
         This function deletes the game from our state. This could also be
         where we can save some of the results of our game for further testing
@@ -52,13 +52,13 @@ class State:
         returns nothing.
         """
         if self.train is True:
-            self.population.snake_died(id)
+            self.population.snake_died(id, data)
         else:
             del self.world[id]
 
     def evolve(self):
         if self.train is True:
-            self.population.evolve()
+            self.population.evolve(Evolution.SELECTION)
         else:
             raise ValueError(
                 'You can\'t evolve the network without it being in train mode.')

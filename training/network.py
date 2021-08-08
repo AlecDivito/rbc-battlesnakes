@@ -3,8 +3,11 @@ import numpy as np
 import random
 
 
-def sigmoid(x):
-    return 1 / (1 + math.exp(-x))
+def sigmoid(gamma):
+    if gamma < 0:
+        return 1 - 1/(1 + math.exp(gamma))
+    else:
+        return 1/(1 + math.exp(-gamma))
 
 
 def relu(Z):
@@ -62,21 +65,21 @@ class Network:
                 func=layer_function,
             )
             self.values['b{}'.format(layer_index)] = Layer(
-                data=np.ones(layer_output_size) * 0.1,
+                data=np.ones(layer_output_size) * -1.0,
                 func=layer_function
             )
 
-    def print_network(self):
-        for index in range(self.number_of_layers):
-            print(self.values['W{}'.format(index)].data.shape,
-                  self.values['W{}'.format(index)].func)
+    # def print_network(self):
+    #     for index in range(self.number_of_layers):
+    #         print(self.values['W{}'.format(index)].data.shape,
+    #               self.values['W{}'.format(index)].func)
 
     def single_layer_forward_propagation(self, activation, weight, bias, func):
         z = np.dot(weight, activation) + bias
         if func == "relu":
-            return relu(z), z
+            return np.vectorize(relu)(z), z
         elif func == "sigmoid":
-            return sigmoid(z), z
+            return np.vectorize(sigmoid)(z), z
         else:
             raise Exception('Non-supported activation function')
 
@@ -105,8 +108,37 @@ class Network:
         """
         current, _ = self.full_forward_propagation(inputs)
         output = np.squeeze(np.asarray(current))
-        # print(output)
         return output
+
+    def flatten(self):
+        network = []
+        for index in range(self.number_of_layers):
+            network.extend(self.values['W{}'.format(index)].data.flatten())
+        return network
+
+    def matrixize(self, one_d_network):
+        """
+        Reshape one demonical array into neural network
+        """
+        offset = 0
+        for index, (input, layer) in enumerate(self.layers):
+            if index + 1 == len(self.layers):
+                output_layer_size = input
+            else:
+                output_layer_size = self.layers[index + 1][0]
+
+            layer_range = (input * output_layer_size) + offset
+            new_layer = one_d_network[offset:layer_range]
+            offset = layer_range
+
+            self.values['W{}'.format(index)] = Layer(
+                data=np.reshape(new_layer, (output_layer_size, input)),
+                func=layer,
+            )
+            self.values['b{}'.format(index)] = Layer(
+                data=np.ones(output_layer_size) * 0.1,
+                func=layer
+            )
 
     def mutate(self, rate):
         """
@@ -121,9 +153,16 @@ class Network:
         # 3. If value is between -1 and 1, than just return it, it's fine
         for index in range(self.number_of_layers):
             data = self.values['W{}'.format(index)].data
-            for (x, y), _ in np.ndenumerate(data):
-                if (random.random() < rate):
-                    data[x][y] = random.random()
+            # https://www.xavierllora.net/2008/11/13/fast-mutation-implementation-for-genetic-algorithms-in-python/
+            r = np.random.uniform(-1.0, 1.0, data.shape) < rate
+            v = np.random.uniform(-1.0, 1.0, data.shape)
+            self.values['W{}'.format(index)].data = r * \
+                v + np.logical_not(r)*data
+            # for (x, y), _ in np.ndenumerate(data):
+            #     overall_counter = overall_counter + 1
+            #     if (random.random() < rate):
+            #         mutate_counter = mutate_counter + 1
+            #         data[x, y] = random.random()
 
     def crossover(self, partnerNetwork):
         """

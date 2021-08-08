@@ -63,7 +63,7 @@ def end():
     It's purely for informational purposes, you don't have to make any decisions here.
     """
     data = request.get_json()
-    state.endGame(data["game"]["id"])
+    state.endGame(data["game"]["id"], data)
     return "ok"
 
 
@@ -87,11 +87,11 @@ if __name__ == "__main__":
         target=app.run, daemon=True, kwargs=kwargs)
     flask_thread.start()
     command = "./battlesnake play --url http://localhost:8080 -g solo -v"
-    for _ in range(100):
+    for _ in range(200):
         counter = AtomicCounter()
         trainers = []
         for index in range(1):
-            thread = Trainer(index, command, counter, 250, False)
+            thread = Trainer(index, command, counter, 150, False)
             thread.start()
             trainers.append(thread)
 

@@ -1,10 +1,11 @@
 from math import floor
 import random
+import numpy as np
 from training.constant import Evolution
 from training.snake import Snake
 from training.game import Game
 
-mutation_rate = 0.1
+mutation_rate = 0.01
 
 
 class BestSnake(Snake):
@@ -13,9 +14,9 @@ class BestSnake(Snake):
 
 class Population:
 
-    def __init__(self, population_size):
+    def __init__(self):
         # Tracking the size of the population of the snakes
-        self.population_size = population_size
+        self.population_size = 0
 
         # Keep track of the number of current generations
         self.generation = 0
@@ -36,6 +37,7 @@ class Population:
         if self.generation == 0 and self.best_snake is None:
             self.snake_games[id] = Game(Snake(11, 11))
             self.aliveSnakeIds.append(id)
+            self.population_size = self.population_size + 1
         else:
             if len(self.current_gen_snake_queue) != 0:
                 snake = self.current_gen_snake_queue.pop()
@@ -45,8 +47,10 @@ class Population:
                 self.evolve()
                 self.create_snake(id)
 
-    def snake_died(self, id):
-        self.snake_games[id].output_snake_history(id, self.generation, len(self.snake_games))
+    def snake_died(self, id, data):
+        self.snake_games[id].output_snake_history(
+            id, self.generation, len(self.snake_games))
+        self.snake_games[id].snake.last_tick(data)
         self.aliveSnakeIds.remove(id)
         self.deadSnakeIds.append(id)
 
@@ -92,6 +96,8 @@ class Population:
         """
         # Get list of snakes id, sorted by fitness
         sorted_snakes_by_fitness = self.__get_sorted_fitness_array()
+        with open("./temp/{}.txt".format(self.generation), "w") as file:
+            file.write("{}".format(sorted_snakes_by_fitness))
 
         return self.snake_games[sorted_snakes_by_fitness[len(sorted_snakes_by_fitness)-1][0]].snake
 
@@ -108,7 +114,10 @@ class Population:
         fitness_sum = sum(fitness for _, fitness in sorted_snakes_by_fitness)
 
         # set a random value
-        rand = floor(random.randrange(0, fitness_sum))
+        if fitness_sum > 0:
+            rand = floor(random.randrange(0, fitness_sum))
+        else:
+            rand = 0
 
         # keep the running sum
         running_sum = 0
@@ -134,12 +143,11 @@ class Population:
         next_generation_snakes = []
         for _ in range(self.population_size):
             # select 2 parents by fitness
-            parent1 = self.select_snake()
+            parent1 = self.best_snake
             parent2 = self.select_snake()
 
             # crossover the 2 snakes to create a child
-            child = parent1.crossover(parent2)
-            child.mutate(mutation_rate)
+            child = parent1.crossover_and_mutate(parent2, mutation_rate)
             next_generation_snakes.append(child)
         return next_generation_snakes
 
