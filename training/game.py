@@ -16,8 +16,6 @@ class Game:
     def tick(self, data):
         game_board = data['board']
         foods = game_board['food']
-        hazards = game_board['hazards']
-        snakes = game_board['snakes']
 
         you = data['you']
         turn = data['turn']
@@ -34,15 +32,16 @@ class Game:
             board[food['x']][food['y']] = BoardItem.FOOD
 
         # 3. set all of the hazards on the board
-        for hazard in hazards:
-            board[hazard['x']][hazard['y']] = BoardItem.OUT_OF_BOUNDS
+        if "hazards" in game_board:
+            for hazard in game_board['hazards']:
+                board[hazard['x']][hazard['y']] = BoardItem.OUT_OF_BOUNDS
 
         # 4. set enemy snakes and snake heads
-        for snake in snakes:
-            for body in snake['body']:
-                board[body['x']][body['y']] = BoardItem.OUT_OF_BOUNDS
-            board[snake['head']['x']][snake['head']
-                                      ['y']] = BoardItem.ENEMYHEAD
+        if "snakes" in game_board:
+            for snake in game_board['snakes']:
+                for body in snake['body']:
+                    board[body['x']][body['y']] = BoardItem.OUT_OF_BOUNDS
+                board[snake['head']['x']][snake['head']['y']] = BoardItem.ENEMYHEAD
 
         # 5. set friendly snake and head
         for body in you['body']:

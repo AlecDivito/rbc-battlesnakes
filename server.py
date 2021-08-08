@@ -1,6 +1,8 @@
 import logging
 import os
 import threading
+
+from flask.helpers import make_response
 from training.train import AtomicCounter, Trainer
 from training.snake import Snake
 from os import environ
@@ -14,6 +16,13 @@ import server_logic
 app = Flask(__name__)
 state = server_logic.State()
 
+@app.after_request
+def after_request_func(response):
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Allow-Headers', '*')
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', '*')
+    return response
 
 @app.get("/")
 def handle_info():
@@ -72,43 +81,45 @@ if __name__ == "__main__":
     print("Starting Battlesnake Server...")
     port = int(os.environ.get("PORT", "8080"))
 
-    # if "BUILD_SNAKE_NETWORK" in os.environ:
-    # Start running the training script
-    print("Starting training network")
-    print("This testing script will fork the battlesnake binary multiple times and test it on your snake")
-    # logging.disabled = True
-    # app.logger.disabled = True
-    state.set_training(True)
-    # state.set_initial_network("./network/gen:84-fitness:20808")
-    # app.run(host="0.0.0.0", port=port, debug=False)
+    if "RUN_SNAKE_NETWORK" in os.environ:
+        # Load all of the script files
+        print("This function is currently not supportted")
+        print("TODO:")
+        print("Make sure that the neural network is saved after each generation")
+        print("Using a folder, open that up and use the best network there")
+        print("Will be implemented later")
+        state.set_training(False)
+        state.set_initial_network(os.environ['RUN_SNAKE_NETWORK'])
+        app.run(host="0.0.0.0", port=port, debug=False)
+    else:
+        # Start running the training script
+        print("Starting training network")
+        print("This testing script will fork the battlesnake binary multiple times and test it on your snake")
+        # logging.disabled = True
+        # app.logger.disabled = True
+        state.set_training(True)
+        if "TRAIN_SNAKE_NETWORK" in os.environ:
+            state.set_initial_network(os.environ["TRAIN_SNAKE_NETWORK"])
+        # app.run(host="0.0.0.0", port=port, debug=False)
 
-    kwargs = {'host': '0.0.0.0', 'port': port,
-              'threaded': True, 'use_reloader': False, 'debug': False}
-    flask_thread = threading.Thread(
-        target=app.run, daemon=True, kwargs=kwargs)
-    flask_thread.start()
-    command = "./battlesnake play --url http://localhost:8080 -g solo -v"
-    for _ in range(500):
-        counter = AtomicCounter()
-        trainers = []
-        for index in range(1):
-            thread = Trainer(index, command, counter, 100, False)
-            thread.start()
-            trainers.append(thread)
+        kwargs = {'host': '0.0.0.0', 'port': port,
+                'threaded': True, 'use_reloader': False, 'debug': False}
+        flask_thread = threading.Thread(
+            target=app.run, daemon=True, kwargs=kwargs)
+        flask_thread.start()
+        command = "./battlesnake play --url http://localhost:8080 -g solo -v"
+        for _ in range(500):
+            counter = AtomicCounter()
+            trainers = []
+            for index in range(1):
+                thread = Trainer(index, command, counter, 150, False)
+                thread.start()
+                trainers.append(thread)
 
-        for thread in trainers:
-            thread.join()
-        state.evolve()
+            for thread in trainers:
+                thread.join()
+            state.evolve()
 
-    print("Training finished")
-    flask_thread.join()
+        print("Training finished")
+        flask_thread.join()
 
-    # else:
-    #     # Load all of the script files
-    #     print("This function is currently not supportted")
-    #     print("TODO:")
-    #     print("Make sure that the neural network is saved after each generation")
-    #     print("Using a folder, open that up and use the best network there")
-    #     print("Will be implemented later")
-    #     state.set_training(False)
-    #     app.run(host="0.0.0.0", port=port, debug=False)

@@ -60,8 +60,7 @@ class Network:
                 layer_output_size = layers[index + 1][0]
 
             self.values['W{}'.format(layer_index)] = Layer(
-                data=np.random.randn(
-                    layer_output_size, layer_input_size) * 0.1,
+                data=np.random.randn(layer_output_size, layer_input_size),
                 func=layer_function,
             )
             self.values['b{}'.format(layer_index)] = Layer(
@@ -70,6 +69,7 @@ class Network:
             )
 
     def load_network_from_path(self, path):
+        print('loading network {}'.format(path))
         for index in range(self.number_of_layers):
             name = 'W{}'.format(index)
             file = '{}/{}.dat'.format(path, name)
@@ -117,34 +117,23 @@ class Network:
         return output
 
     def flatten(self):
-        network = []
+        network = {}
         for index in range(self.number_of_layers):
-            network.extend(self.values['W{}'.format(index)].data.flatten())
+            network[index] = self.values['W{}'.format(index)].data.flatten()
         return network
 
-    def matrixize(self, one_d_network):
+    def matrixize(self, network_dict):
         """
         Reshape one demonical array into neural network
         """
-        offset = 0
-        for index, (input, layer) in enumerate(self.layers):
-            if index + 1 == len(self.layers):
+        for key in network_dict:
+            (input, layer) = self.layers[key]
+            if key + 1 == len(self.layers):
                 output_layer_size = input
             else:
-                output_layer_size = self.layers[index + 1][0]
+                output_layer_size = self.layers[key + 1][0]
 
-            layer_range = (input * output_layer_size) + offset
-            new_layer = one_d_network[offset:layer_range]
-            offset = layer_range
-
-            self.values['W{}'.format(index)] = Layer(
-                data=np.reshape(new_layer, (output_layer_size, input)),
-                func=layer,
-            )
-            self.values['b{}'.format(index)] = Layer(
-                data=np.ones(output_layer_size) * 0.1,
-                func=layer
-            )
+            self.values['W{}'.format(key)].data = np.reshape(network_dict[key], (output_layer_size, input))
 
     def mutate(self, rate):
         """

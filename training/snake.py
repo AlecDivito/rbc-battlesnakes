@@ -1,16 +1,18 @@
 
 from math import floor
 import numpy as np
-from training.constant import BOARD_CATEGORIES, BoardItem
+from training.constant import BOARD_CATEGORIES, BoardItem, SNAKE_EYESIGHT
 from training.network import Network
 import os
 
 
 def one_point_crossover(a, b):
-    middle = np.random.randint(0, a.shape[0] - 1)
-    p1 = a[middle:]
-    p2 = a[:middle]
-    return p1 + p2
+    result = {}
+    for key in a:
+        middle = np.random.randint(0, a[key].shape[0] - 1)
+        result[key] = a[key]
+        result[key][:middle] = b[key][:middle]
+    return result
 
 
 def multi_point_crossover(a: np.array, b: np.array):
@@ -37,18 +39,18 @@ def P(L, n, p): return binomial(L, n) * p**n * (1-p)**(L-n)
 
 class Snake:
 
-    def __init__(self, board_x, board_y, initial_network_path, eye_sight=5):
+    def __init__(self, board_x, board_y, initial_network_path):
         self.board_x = board_x
         self.board_y = board_y
         self.health = 0  # The current health of the snake
         self.length = 0  # The current length of the snake
         self.turn = 0  # The current turn
         self.fitness = 0  # The current fitness score
-        self.eye_sight = eye_sight  # How much of the board he can see
-        input_board = (eye_sight * eye_sight) - 1
+        self.eye_sight = SNAKE_EYESIGHT  # How much of the board he can see
+        input_board = (SNAKE_EYESIGHT * SNAKE_EYESIGHT) - 1
         nn = [
             (input_board, "relu"),
-            (floor((input_board / 4) * 3), "relu"),
+            # (floor((input_board / 4) * 3), "relu"),
             (floor(input_board / 2), "relu"),
             (floor(input_board / 4), "relu"),
             (4, "sigmoid")
@@ -60,9 +62,10 @@ class Snake:
         self.death_by_body = False
         self.moves = []
         self.decisions = []
+        self.penalty = []
 
     def clone(self):
-        snake = Snake(self.board_x, self.board_y, None, self.eye_sight)
+        snake = Snake(self.board_x, self.board_y, None)
         snake.health = self.health
         snake.length = self.length
         snake.turn = self.turn
@@ -72,6 +75,7 @@ class Snake:
         snake.network = self.network.clone()
         snake.moves = self.moves
         snake.decisions = self.decisions
+        snake.penalty = self.penalty
         return snake
 
     def tick(self, turn, health, length, you, board):
@@ -106,18 +110,39 @@ class Snake:
                 elif board[x][y] == BoardItem.FRIENDLY_HEAD:
                     continue  # Skip the head
                 elif board[x][y] == BoardItem.FRIENDLY_BODY:
-                    vision[index] = -1
+                    x_diff = abs(x - head['x'])
+                    y_diff = abs(y - head['y'])
+                    vision[index] == (1 / (x_diff + y_diff)) * -1
                 elif board[x][y] == BoardItem.FOOD:
                     # calculate the max distance to the food
                     x_diff = abs(x - head['x'])
                     y_diff = abs(y - head['y'])
                     vision[index] == 1 / (x_diff + y_diff)
-                else:
-                    vision[index] == 0
                 index = index + 1
 
         decision = self.network.calculateOutput(vision)
         index = decision.argmax()
+
+        # Our fitness function needs to be more complicated. Therefore, we need
+        # some way of tracking the "penalties" that the snake commits during the
+        # game. The biggest one is if it tries to move where it's body is.
+        if index == 0: # up
+            y = head['y'] + 1
+            if y > 0 and y < 10 and  board[head['x']][y] == BoardItem.FRIENDLY_BODY:
+                self.penalty.append(1)
+        elif index == 1: # down
+            y = head['y'] - 1
+            if y > 0 and y < 10 and board[head['x']][y] == BoardItem.FRIENDLY_BODY:
+                self.penalty.append(1)
+        elif index == 2: # left
+            head['x'] - 1
+            if x > 0 and x < 10 and board[x][head['y']] == BoardItem.FRIENDLY_BODY:
+                self.penalty.append(1)
+        elif index == 3: # right
+            head['x'] + 1
+            if x > 0 and x < 10 and board[x][head['y']] == BoardItem.FRIENDLY_BODY:
+                self.penalty.append(1)
+
         self.moves.append(index)
         self.decisions.append(decision)
         return index
@@ -143,22 +168,26 @@ class Snake:
         Returns a number
         """
         if (self.death_by_wall == True):
-            self.fitness = self.turn
+            self.fitness = floor((self.length - 3) - len(self.penalty))
         elif (self.death_by_body == True):
-            self.fitness = self.turn
+            self.fitness = floor((self.length - 3) - len(self.penalty) + (self.turn / 10))
         else:
-            self.fitness = self.turn * self.turn * (self.length - 2)
+            self.fitness = self.turn * (self.length - 2)
 
     def crossover_and_mutate(self, partner, mutation_rate):
-        child = Snake(self.board_x, self.board_y, None, 5)
+        child = Snake(self.board_x, self.board_y, None)
         # crossover
-        flat_network_x = np.array(self.network.flatten())
-        flat_network_y = np.array(partner.network.flatten())
-        crossover = multi_point_crossover(flat_network_x, flat_network_y)
+        flat_network_x = self.network.flatten()
+        flat_network_y = partner.network.flatten()
+        crossover = one_point_crossover(flat_network_x, flat_network_y)
         # mutate
-        r = np.random.uniform(-1.0, 1.0, crossover.shape) < mutation_rate
-        v = np.random.uniform(-1.0, 1.0, crossover.shape)
-        crossover = r * v + np.logical_not(r) * crossover
+        for key in crossover:
+            r = np.random.uniform(-1.0, 1.0, crossover[key].shape) > mutation_rate
+            v = np.random.uniform(-1.0, 1.0, crossover[key].shape)
+            for index in range(len(r)):
+                result = r[index]
+                if result == True:
+                    crossover[key][index] = v[index]
         # return child
         child.network.matrixize(crossover)
         return child

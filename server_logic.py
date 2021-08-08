@@ -1,3 +1,4 @@
+from training.snake import Snake
 from training.game import Game
 from training.population import Population
 from training.constant import BoardItem, Evolution
@@ -17,11 +18,13 @@ class State:
         self.world = {}
         self.population = Population()
         self.train = True
+        self.default_network_path = None
 
     def set_training(self, train=True):
         self.train = train
 
     def set_initial_network(self, path):
+        self.default_network_path = path
         self.population.set_initial_network(path)
 
     def newGame(self, id):
@@ -33,7 +36,7 @@ class State:
         if self.train is True:
             self.population.create_snake(id)
         else:
-            self.world[id] = Game()
+            self.world[id] = Game(Snake(11, 11, self.default_network_path))
 
     def move(self, id, data):
         """
@@ -45,7 +48,11 @@ class State:
         if self.train is True:
             return self.population.tick(id, data)
         else:
-            return self.world[id].tick(data)
+            if id in self.world:
+                return self.world[id].tick(data)
+            else:
+                self.world[id] = Game(Snake(11, 11, self.default_network_path))
+                return self.world[id].tick(data)
 
     def endGame(self, id, data):
         """
@@ -57,6 +64,7 @@ class State:
         if self.train is True:
             self.population.snake_died(id, data)
         else:
+            self.world[id].snake.last_tick(data)
             del self.world[id]
 
     def evolve(self):

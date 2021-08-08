@@ -5,7 +5,7 @@ from training.constant import Evolution
 from training.snake import Snake
 from training.game import Game
 
-mutation_rate = 0.05
+mutation_rate = 0.99
 
 
 class BestSnake(Snake):
@@ -39,7 +39,7 @@ class Population:
 
     def create_snake(self, id):
         if self.generation == 0 and self.best_snake is None:
-            self.snake_games[id] = Game(Snake(11, 11, self.initial_network_path, 5))
+            self.snake_games[id] = Game(Snake(11, 11, self.initial_network_path))
             self.aliveSnakeIds.append(id)
             self.population_size = self.population_size + 1
         else:
@@ -48,8 +48,11 @@ class Population:
                 self.snake_games[id] = Game(snake)
                 self.aliveSnakeIds.append(id)
             else:
-                self.evolve()
-                self.create_snake(id)
+                if (len(self.snake_games) == self.deadSnakeIds):
+                    self.evolve()
+                    self.create_snake(id)
+                else:
+                    raise Exception("For some reason, we don't have many snakes :/")
 
     def snake_died(self, id, data):
         self.snake_games[id].snake.last_tick(data)
@@ -66,18 +69,20 @@ class Population:
 
         This method resets the current population
         """
-        print(len(self.current_gen_snake_queue))
-        print(len(self.deadSnakeIds))
         # Find the best snake
         self.best_snake = self.find_best_snake()
         print("Evolving Gen {}: best fitness = {} living {} turns with a length of {} and died by (Eat:{},OutOfBounds:{})".format(self.generation, self.best_snake.fitness, self.best_snake.turn, self.best_snake.length, self.best_snake.death_by_body, self.best_snake.death_by_wall))
+        if self.best_snake.fitness > 500:
+            self.best_snake.save_to_file(self.generation)
         if self.global_best_snake is None:
             self.global_best_snake = self.best_snake
-        if self.best_snake.fitness >= self.global_best_snake.fitness:
-            print("New best! {} > {}".format(self.best_snake.fitness, self.global_best_snake.fitness))
-            self.global_best_snake = self.best_snake
-            if self.global_best_snake.fitness > 9999:
-                self.global_best_snake.save_to_file(self.generation)
+        else:
+            if self.best_snake.fitness >= self.global_best_snake.fitness:
+                print("New best! {} > {}".format(self.best_snake.fitness, self.global_best_snake.fitness))
+                self.global_best_snake = self.best_snake
+            else:
+                self.snake_games["best"] = Game(self.global_best_snake.clone())
+
 
         # Create an evolution queue
         if evolve_by is Evolution.SELECTION:
@@ -90,6 +95,7 @@ class Population:
         self.aliveSnakeIds = []
         self.deadSnakeIds = []
         self.snake_games = {}
+        self.population_size = len(self.current_gen_snake_queue)
 
     def mutate(self):
         for key in self.snake_games:
@@ -149,15 +155,17 @@ class Population:
         return sorted(fitness_array, key=lambda i: i[1])
 
     def __evolve_by_random_selection(self):
-        next_generation_snakes = [self.global_best_snake.clone()]
-        for _ in range(1, self.population_size):
-            # select 2 parents by fitness
-            parent1 = self.select_snake()
-            parent2 = self.select_snake()
+        next_generation_snakes = []
+        with open("./choice/{}.txt".format(self.generation), "w") as file:
+            for _ in range(self.population_size + 1):
+                # select 2 parents by fitness
+                parent1 = self.select_snake()
+                parent2 = self.select_snake()
+                file.write("fitness {} merged with {}\n".format(parent1.fitness, parent2.fitness))
 
-            # crossover the 2 snakes to create a child
-            child = parent1.crossover_and_mutate(parent2, mutation_rate)
-            next_generation_snakes.append(child)
+                # crossover the 2 snakes to create a child
+                child = parent1.crossover_and_mutate(parent2, mutation_rate)
+                next_generation_snakes.append(child)
         return next_generation_snakes
 
     def __evolve_by_best_snake(self):

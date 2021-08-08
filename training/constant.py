@@ -10,6 +10,7 @@ class Evolution(Enum):
 
 BOARD_CATEGORIES = 3
 
+SNAKE_EYESIGHT = 11
 
 class BoardItem():
     EMPTY = 0
