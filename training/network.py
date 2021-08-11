@@ -69,7 +69,7 @@ class Network:
             )
 
     def load_network_from_path(self, path):
-        print('loading network {}'.format(path))
+        # print('loading network {}'.format(path))
         for index in range(self.number_of_layers):
             name = 'W{}'.format(index)
             file = '{}/{}.dat'.format(path, name)

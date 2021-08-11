@@ -10,6 +10,15 @@ be cool to create a generic algorithm that will be able to compete against other
 snakes. SO I'm going to do that. No planning, just plain trust AI that it will
 win me the competition.
 
+## Best Snakes
+
+The currently best trained snakes are the following:
+
+- `best_battle_snake` for snakes that are used to 8 snakes battleing eachother
+- `best_snake` for snakes that are just playing solo
+
+Although, both should work :) just fyi if you are trying to run this (aka this is for my team <3)
+
 ## TODO
 
 | Done? | Description                                                                                                                              |
@@ -106,7 +115,7 @@ for that. Anyways, how to train multiple snakes:
 # Note, run this as one line
 SNAKE=1
 MULTI_SNAKE_TRAINING=True
-SNAKE_NETWORK=./network/gen:0-fitness:13380
+SNAKE_NETWORK=./network/snake_1/gen:37-fitness:2065.0
 SAVE_FOLDER="./network/snake_$SNAKE"
 ITERATIONS=50
 PORT="808$SNAKE" python3 ./server.py &
@@ -116,6 +125,8 @@ After the number of servers are setup that you want to run tests with, run the
 following command:
 
 ```bash
+for v in {1..50}
+do
 for i in {1..50}
 do
         ./battlesnake play -W 11 -H 11 \
@@ -126,8 +137,9 @@ do
             --name snake_5 --url http://localhost:8085 \
             --name snake_6 --url http://localhost:8086 \
             --name snake_7 --url http://localhost:8087 \
-            --name snake_8 --url http://localhost:8088 \
-            -v
+            --name snake_8 --url http://localhost:8088 
+done
+sleep 10
 done
 ```
 
@@ -149,14 +161,14 @@ Github Hooks. I think someone else is going to need to do this.
 ### Make all the snakes quickly
 
 ```bash
-SNAKE=1 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
-SNAKE=2 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
-SNAKE=3 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
-SNAKE=4 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
-SNAKE=5 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
-SNAKE=6 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
-SNAKE=7 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
-SNAKE=8 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=1 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/snake_1/gen:37-fitness:2065.0 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=2 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/snake_1/gen:37-fitness:2065.0 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=3 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/snake_1/gen:37-fitness:2065.0 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=4 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/snake_1/gen:37-fitness:2065.0 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=5 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/snake_1/gen:37-fitness:2065.0 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=6 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/snake_1/gen:37-fitness:2065.0 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=7 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/snake_1/gen:37-fitness:2065.0 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=8 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/snake_1/gen:37-fitness:2065.0 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
 ```
 
 ### Kill all background jobs
