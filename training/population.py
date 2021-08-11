@@ -14,7 +14,9 @@ class BestSnake(Snake):
 
 class Population:
 
-    def __init__(self):
+    def __init__(self, debug):
+        self.debug = debug
+        self.multisnake_iteration_size = None
         # Tracking the size of the population of the snakes
         self.population_size = 0
 
@@ -43,6 +45,9 @@ class Population:
     def set_save_folder(self, path):
         self.snake_save_folder_path = path
 
+    def set_multisnake_iteration_size(self, size):
+        self.multisnake_iteration_size = size
+
     def create_snake(self, id, number_of_snakes):
         if self.generation == 0 and self.best_snake is None:
             self.snake_games[id] = Game(
@@ -61,7 +66,7 @@ class Population:
                     self.create_snake(id)
                 else:
                     raise Exception(
-                        "For some reason, we don't have many snakes :/")
+                        "For some reason, we don't have many snakes :/ Gen: {}, Queue: {}, Games: {}, Dead Snakes: {}, Alive Snakes: {}".format(self.generation, len(self.current_gen_snake_queue), len(self.snake_games), len(self.deadSnakeIds), len(self.aliveSnakeIds)))
 
     def snake_died(self, id, data):
         if id in self.snake_games:
@@ -117,6 +122,8 @@ class Population:
         self.deadSnakeIds = []
         self.snake_games = {}
         self.population_size = len(self.current_gen_snake_queue)
+        print("Evolving finished! Generation {} has {} new snakes are ready for testing!".format(
+            self.generation, self.population_size))
 
     def mutate(self):
         for key in self.snake_games:
@@ -130,11 +137,12 @@ class Population:
         """
         # Get list of snakes id, sorted by fitness
         sorted_snakes_by_fitness = self.__get_sorted_fitness_array()
-        with open("./temp/{}.txt".format(self.generation), "w") as file:
-            for (key, fitness) in sorted_snakes_by_fitness:
-                game = self.snake_games[key]
-                file.write("{} -> {} = {} or {}\n".format(fitness,
-                           key, game.moves, game.snake.decisions))
+        if self.debug:
+            with open("./temp/{}.txt".format(self.generation), "w") as file:
+                for (key, fitness) in sorted_snakes_by_fitness:
+                    game = self.snake_games[key]
+                    file.write("{} -> {} = {} or {}\n".format(fitness,
+                                                              key, game.moves, game.snake.decisions))
 
         return self.snake_games[sorted_snakes_by_fitness[len(sorted_snakes_by_fitness)-1][0]].snake
 
@@ -178,14 +186,26 @@ class Population:
 
     def __evolve_by_random_selection(self):
         next_generation_snakes = []
-        with open("./choice/{}.txt".format(self.generation), "w") as file:
-            for _ in range(self.population_size + 1):
+        size = self.population_size
+        if self.multisnake_iteration_size is not None:
+            size = self.multisnake_iteration_size
+        if self.debug:
+            with open("./choice/{}.txt".format(self.generation), "w") as file:
+                for _ in range(size):
+                    # select 2 parents by fitness
+                    parent1 = self.select_snake()
+                    parent2 = self.select_snake()
+                    file.write("fitness {} merged with {}\n".format(
+                        parent1.fitness, parent2.fitness))
+                    # crossover the 2 snakes to create a child
+                    child = parent1.crossover_and_mutate(
+                        parent2, mutation_rate)
+                    next_generation_snakes.append(child)
+        else:
+            for _ in range(size):
                 # select 2 parents by fitness
                 parent1 = self.select_snake()
                 parent2 = self.select_snake()
-                file.write("fitness {} merged with {}\n".format(
-                    parent1.fitness, parent2.fitness))
-
                 # crossover the 2 snakes to create a child
                 child = parent1.crossover_and_mutate(parent2, mutation_rate)
                 next_generation_snakes.append(child)
@@ -193,7 +213,10 @@ class Population:
 
     def __evolve_by_best_snake(self):
         next_generation_snakes = []
-        for _ in range(self.population_size):
+        size = self.population_size
+        if self.multisnake_iteration_size is not None:
+            size = self.multisnake_iteration_size
+        for _ in range(size):
             # select 2 parents by fitness
             best_snake = self.best_snake
             best_snake.mutate(mutation_rate)

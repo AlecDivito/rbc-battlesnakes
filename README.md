@@ -116,7 +116,7 @@ After the number of servers are setup that you want to run tests with, run the
 following command:
 
 ```bash
-for i in {1..30}
+for i in {1..50}
 do
         ./battlesnake play -W 11 -H 11 \
             --name snake_1 --url http://localhost:8081 \

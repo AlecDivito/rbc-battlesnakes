@@ -15,9 +15,9 @@ from the list of possible moves!
 
 class State:
 
-    def __init__(self) -> None:
+    def __init__(self, debug) -> None:
         self.world = {}
-        self.population = Population()
+        self.population = Population(debug)
         self.train = True
         self.default_network_path = None
         self.training_iterations = None
@@ -37,6 +37,7 @@ class State:
 
     def set_training_iterations(self, iterations):
         self.training_iterations = iterations
+        self.population.set_multisnake_iteration_size(iterations)
 
     def newGame(self, id, number_of_snakes):
         """
@@ -79,9 +80,7 @@ class State:
                 self.iterations = self.iterations + 1
             if self.iterations == self.training_iterations:
                 self.population.evolve(Evolution.SELECTION)
-
-            # print(self.iterations, self.training_iterations,
-            #       type(self.training_iterations))
+                self.iterations = 0
         else:
             self.world[id].snake.last_tick(data)
             del self.world[id]

@@ -5,7 +5,7 @@ import threading
 from flask.helpers import make_response
 from training.train import AtomicCounter, Trainer
 from training.snake import Snake
-from os import environ
+import os
 
 from flask import Flask
 from flask import request
@@ -14,7 +14,7 @@ import server_logic
 
 
 app = Flask(__name__)
-state = server_logic.State()
+state = server_logic.State(os.getenv("DEBUG", False))
 
 
 @app.after_request
