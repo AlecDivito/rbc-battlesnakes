@@ -88,7 +88,7 @@ if __name__ == "__main__":
         state.set_training(True)
         state.set_initial_network(os.environ['SNAKE_NETWORK'])
         state.set_save_folder(os.environ['SAVE_FOLDER'])
-        state.set_training_iterations(os.environ['ITERATIONS'])
+        state.set_training_iterations(int(os.environ['ITERATIONS']))
         app.run(host="0.0.0.0", port=port, debug=False)
     elif "SNAKE_NETWORK" in os.environ:
         # Load all of the script files

@@ -57,6 +57,7 @@ class Population:
             else:
                 if (len(self.snake_games) == self.deadSnakeIds):
                     self.evolve()
+                    print("Completed evolving. Ready for more training")
                     self.create_snake(id)
                 else:
                     raise Exception(
@@ -151,7 +152,7 @@ class Population:
 
         # set a random value
         if fitness_sum > 0:
-            rand = floor(random.randrange(0, fitness_sum))
+            rand = floor(random.randrange(0, floor(fitness_sum)))
         else:
             rand = 0
 

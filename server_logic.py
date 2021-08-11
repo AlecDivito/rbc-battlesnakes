@@ -79,6 +79,9 @@ class State:
                 self.iterations = self.iterations + 1
             if self.iterations == self.training_iterations:
                 self.population.evolve(Evolution.SELECTION)
+
+            # print(self.iterations, self.training_iterations,
+            #       type(self.training_iterations))
         else:
             self.world[id].snake.last_tick(data)
             del self.world[id]
