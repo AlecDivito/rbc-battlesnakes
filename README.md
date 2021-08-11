@@ -12,20 +12,20 @@ win me the competition.
 
 ## TODO
 
-| Done? | Description                                                                                                              |
-| :---: | ------------------------------------------------------------------------------------------------------------------------ |
-|  [x]  | Working neural network code                                                                                              |
-|  [x]  | Training logic needed to train the snake                                                                                 |
-|  [ ]  | Modify network to take categorical data instead of decimals                                                              |
-|  [ ]  | Modify training to work with multiple snakes (should be already done)                                                    |
-|  [ ]  | Get multi-threaded training working correctly                                                                            |
-|  [ ]  | Add ability to run snake using saved network                                                                             |
-|  [ ]  | Add ability to start training from an existing network                                                                   |
-|  [ ]  | Remove all __"magic"__ numbers, convert them all to environment variables                                                |
-|  [ ]  | Deployment strategy (training while live, playing games, cloud platform)                                                 |
-|  [ ]  | Deployed                                                                                                                 |
-|  [ ]  | Add your name somewhere on the project ;)                                                                                |
-|  [ ]  | Allow a snake to __choose__ the network it is using depending on some settings (eg. Number of snakes, length of himself) |
+| Done? | Description                                                                                                                              |
+| :---: | ---------------------------------------------------------------------------------------------------------------------------------------- |
+|  [x]  | Working neural network code                                                                                                              |
+|  [x]  | Training logic needed to train the snake                                                                                                 |
+|  [x]  | Modify network to take categorical data instead of decimals (didn't do this, rather just gave values between 1 and -1 based on distance) |
+|  [x]  | Modify training to work with multiple snakes (should be already done)                                                                    |
+|  [ ]  | Get multi-threaded training working correctly                                                                                            |
+|  [x]  | Add ability to run snake using saved network                                                                                             |
+|  [x]  | Add ability to start training from an existing network                                                                                   |
+|  [ ]  | Remove all __"magic"__ numbers, convert them all to environment variables                                                                |
+|  [ ]  | Deployment strategy (training while live, playing games, cloud platform)                                                                 |
+|  [ ]  | Deployed                                                                                                                                 |
+|  [ ]  | Add your name somewhere on the project ;)                                                                                                |
+|  [ ]  | Allow a snake to __choose__ the network it is using depending on some settings (eg. Number of snakes, length of himself)                 |
 
 ## Development
 
@@ -84,6 +84,53 @@ We need to be able to switch between testing and running the server. Look at the
 `TODO` section to get a better understanding of what is required to make this
 puppy __purrrr__.
 
+### MultiSnake Training
+
+Although I tried to create a script called `train.sh` to train multiple snakes,
+I believe it maybe easier to just run multiple snakes at a time and run a for
+loop in bash to hit all of the snake servers locally. Although we could probably
+have all of the networks share their best network, I dont think I have the time
+for that. Anyways, how to train multiple snakes:
+
+1. Set the following environment variables
+   1. `MULTI_SNAKE_TRAINING`: can be anything (normally `True`)
+   2. `SNAKE_NETWORK`: Start training with an initial snake network. `REQUIRED`
+   3. `SAVE_FOLDER`: Save the best network to file. `REQUIRED`
+   4. `ITERATIONS`: Number of games to play before evolving. `REQUIRED`
+2. After setting those values run the follow code snippet
+3. Note the `&` at the end. This tells the terminal to run the script in the background
+4. After finishing testing, run `jobs` too see all of the background processes that are currently running
+5. us `fg` and `CTRL + C` to cancel the programs
+
+```bash
+# Note, run this as one line
+SNAKE=1
+MULTI_SNAKE_TRAINING=True
+SNAKE_NETWORK=./network/gen:0-fitness:13380
+SAVE_FOLDER="./network/snake_$SNAKE"
+ITERATIONS=50
+PORT="808$SNAKE" python3 ./server.py &
+```
+
+After the number of servers are setup that you want to run tests with, run the
+following command:
+
+```bash
+for i in {1..50}
+do
+        ./battlesnake play -W 11 -H 11 \
+            --name snake_1 --url http://localhost:8081 \
+            --name snake_2 --url http://localhost:8082 \
+            --name snake_3 --url http://localhost:8083 \
+            --name snake_4 --url http://localhost:8084 \
+            --name snake_5 --url http://localhost:8085 \
+            --name snake_6 --url http://localhost:8086 \
+            --name snake_7 --url http://localhost:8087 \
+            --name snake_8 --url http://localhost:8088 \
+            -v
+done
+```
+
 ### Production Development
 
 TODO...
@@ -96,3 +143,26 @@ TODO...
 
 But I'm thinking just setup some server in AWS somewhere and push the code using
 Github Hooks. I think someone else is going to need to do this.
+
+## Appendix
+
+### Make all the snakes quickly
+
+```bash
+SNAKE=1 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=2 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=3 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=4 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=5 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=6 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=7 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+SNAKE=8 MULTI_SNAKE_TRAINING=True SNAKE_NETWORK=./network/gen:0-fitness:13380 SAVE_FOLDER="./network/snake_$SNAKE" ITERATIONS=50 PORT="808$SNAKE" python3 ./server.py &
+```
+
+### Kill all background jobs
+
+[Taken from this stackoverflow answer](https://unix.stackexchange.com/questions/43527/kill-all-background-jobs)
+
+```bash
+jobs -p | grep -o -E '\s\d+\s' | xargs kill
+```

@@ -1,3 +1,4 @@
+import os
 from training.snake import Snake
 from training.game import Game
 from training.population import Population
@@ -14,11 +15,13 @@ from the list of possible moves!
 
 class State:
 
-    def __init__(self) -> None:
+    def __init__(self, debug) -> None:
         self.world = {}
-        self.population = Population()
+        self.population = Population(debug)
         self.train = True
         self.default_network_path = None
+        self.training_iterations = None
+        self.iterations = 0
 
     def set_training(self, train=True):
         self.train = train
@@ -27,16 +30,26 @@ class State:
         self.default_network_path = path
         self.population.set_initial_network(path)
 
-    def newGame(self, id):
+    def set_save_folder(self, folder):
+        # check if it exists, if it doesn't, create it
+        os.makedirs(folder, exist_ok=True)
+        self.population.set_save_folder(folder)
+
+    def set_training_iterations(self, iterations):
+        self.training_iterations = iterations
+        self.population.set_multisnake_iteration_size(iterations)
+
+    def newGame(self, id, number_of_snakes):
         """
         This function takes an ID and initializes a snake for a new game.
 
         This function returns nothing
         """
         if self.train is True:
-            self.population.create_snake(id)
+            self.population.create_snake(id, number_of_snakes)
         else:
-            self.world[id] = Game(Snake(11, 11, self.default_network_path))
+            self.world[id] = Game(
+                Snake(11, 11, number_of_snakes, self.default_network_path))
 
     def move(self, id, data):
         """
@@ -63,6 +76,11 @@ class State:
         """
         if self.train is True:
             self.population.snake_died(id, data)
+            if self.training_iterations is not None:
+                self.iterations = self.iterations + 1
+            if self.iterations == self.training_iterations:
+                self.population.evolve(Evolution.SELECTION)
+                self.iterations = 0
         else:
             self.world[id].snake.last_tick(data)
             del self.world[id]

@@ -5,7 +5,7 @@ import threading
 from flask.helpers import make_response
 from training.train import AtomicCounter, Trainer
 from training.snake import Snake
-from os import environ
+import os
 
 from flask import Flask
 from flask import request
@@ -14,7 +14,8 @@ import server_logic
 
 
 app = Flask(__name__)
-state = server_logic.State()
+state = server_logic.State(os.getenv("DEBUG", False))
+
 
 @app.after_request
 def after_request_func(response):
@@ -23,6 +24,7 @@ def after_request_func(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Methods', '*')
     return response
+
 
 @app.get("/")
 def handle_info():
@@ -51,7 +53,8 @@ def handle_start():
     request.json contains information about the game that's about to be played.
     """
     data = request.get_json()
-    state.newGame(data["game"]["id"])
+    number_of_snakes = len(data['board']['snakes'])
+    state.newGame(data["game"]["id"], number_of_snakes)
     return "ok"
 
 
@@ -81,7 +84,13 @@ if __name__ == "__main__":
     print("Starting Battlesnake Server...")
     port = int(os.environ.get("PORT", "8080"))
 
-    if "RUN_SNAKE_NETWORK" in os.environ:
+    if "MULTI_SNAKE_TRAINING" in os.environ:
+        state.set_training(True)
+        state.set_initial_network(os.environ['SNAKE_NETWORK'])
+        state.set_save_folder(os.environ['SAVE_FOLDER'])
+        state.set_training_iterations(int(os.environ['ITERATIONS']))
+        app.run(host="0.0.0.0", port=port, debug=False)
+    elif "SNAKE_NETWORK" in os.environ:
         # Load all of the script files
         print("This function is currently not supportted")
         print("TODO:")
@@ -89,7 +98,7 @@ if __name__ == "__main__":
         print("Using a folder, open that up and use the best network there")
         print("Will be implemented later")
         state.set_training(False)
-        state.set_initial_network(os.environ['RUN_SNAKE_NETWORK'])
+        state.set_initial_network(os.environ['SNAKE_NETWORK'])
         app.run(host="0.0.0.0", port=port, debug=False)
     else:
         # Start running the training script
@@ -103,7 +112,7 @@ if __name__ == "__main__":
         # app.run(host="0.0.0.0", port=port, debug=False)
 
         kwargs = {'host': '0.0.0.0', 'port': port,
-                'threaded': True, 'use_reloader': False, 'debug': False}
+                  'threaded': True, 'use_reloader': False, 'debug': False}
         flask_thread = threading.Thread(
             target=app.run, daemon=True, kwargs=kwargs)
         flask_thread.start()
@@ -122,4 +131,3 @@ if __name__ == "__main__":
 
         print("Training finished")
         flask_thread.join()
-
