@@ -41,9 +41,9 @@ class Game:
         if "snakes" in game_board:
             for snake in game_board['snakes']:
                 for body in snake['body']:
-                    board[body['x']][body['y']] = BoardItem.OUT_OF_BOUNDS
+                    board[body['x']][body['y']] = BoardItem.ENEMY_BODY
                 board[snake['head']['x']][snake['head']
-                                          ['y']] = BoardItem.ENEMYHEAD
+                                          ['y']] = BoardItem.ENEMY_HEAD
 
         # 5. set friendly snake and head
         for body in you['body']:

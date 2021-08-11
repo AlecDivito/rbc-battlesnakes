@@ -118,6 +118,11 @@ class Snake:
                     vision[index] = -1
                 elif board[x][y] == BoardItem.FRIENDLY_HEAD:
                     continue  # Skip the head
+                elif board[x][y] == BoardItem.ENEMY_BODY or board[x][y] == BoardItem.ENEMY_HEAD:
+                    x_diff = abs(x - head['x'])
+                    y_diff = abs(y - head['y'])
+                    avoid = self.health / 100 # avoid people most of the time unless we need food
+                    vision[index] == (avoid * (1 / (x_diff + y_diff))) * -1
                 elif board[x][y] == BoardItem.FRIENDLY_BODY:
                     x_diff = abs(x - head['x'])
                     y_diff = abs(y - head['y'])
@@ -126,7 +131,8 @@ class Snake:
                     # calculate the max distance to the food
                     x_diff = abs(x - head['x'])
                     y_diff = abs(y - head['y'])
-                    vision[index] == 1 / (x_diff + y_diff)
+                    want = abs(100 - self.health) / 100 # Only get food if we need it
+                    vision[index] == want * (1 / (x_diff + y_diff))
                 index = index + 1
 
         decision = self.network.calculateOutput(vision)
