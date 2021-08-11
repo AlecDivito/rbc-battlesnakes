@@ -63,14 +63,21 @@ class Population:
                         "For some reason, we don't have many snakes :/")
 
     def snake_died(self, id, data):
-        self.snake_games[id].snake.last_tick(data)
-        self.aliveSnakeIds.remove(id)
-        self.deadSnakeIds.append(id)
+        if id in self.snake_games:
+            self.snake_games[id].snake.last_tick(data)
+            self.aliveSnakeIds.remove(id)
+            self.deadSnakeIds.append(id)
 
     def tick(self, id, data):
         if id in self.snake_games:
             return self.snake_games[id].tick(data)
         else:
+            if id in self.deadSnakeIds:
+                print("{} is already dead".format(id))
+            elif id in self.aliveSnakeIds:
+                print("{} is alive but was not found in snake games".format(id))
+            else:
+                print("{} was not found :( returning random response".format(id))
             return ""
 
     def evolve(self, evolve_by=Evolution.SELECTION):
