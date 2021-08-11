@@ -21,6 +21,7 @@ class Game:
         turn = data['turn']
         health = you['health']
         length = you['length']
+        remaining_snakes = len(data['board']['snakes'])
 
         # 1. initialize the boards full of zeros
         board = np.empty(
@@ -41,7 +42,8 @@ class Game:
             for snake in game_board['snakes']:
                 for body in snake['body']:
                     board[body['x']][body['y']] = BoardItem.OUT_OF_BOUNDS
-                board[snake['head']['x']][snake['head']['y']] = BoardItem.ENEMYHEAD
+                board[snake['head']['x']][snake['head']
+                                          ['y']] = BoardItem.ENEMYHEAD
 
         # 5. set friendly snake and head
         for body in you['body']:
@@ -49,8 +51,8 @@ class Game:
         board[you['head']['x']][you['head']['y']] = BoardItem.FRIENDLY_HEAD
 
         # Send the move to the snake
-        next_move = self.snake.tick(turn, health, length, you, board)
+        next_move = self.snake.tick(
+            turn, health, length, remaining_snakes, you, board)
         possible_moves = ["up", "down", "left", "right"]
         self.moves.append(possible_moves[next_move])
         return possible_moves[next_move]
-
