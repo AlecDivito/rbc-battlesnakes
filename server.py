@@ -2,7 +2,7 @@ import logging
 import os
 import threading
 
-from flask.helpers import make_response
+from flask.helpers import make_response, send_file
 from training.train import AtomicCounter, Trainer
 from training.snake import Snake
 import os
@@ -79,6 +79,16 @@ def end():
     return "ok"
 
 
+@app.get("/download")
+def download():
+    """
+    This function is used to download training data that maybe stuck on a server
+    that is training with live data (snakes).    
+    """
+    data_file_path = state.build_data_zip_file()
+    return send_file(data_file_path, as_attachment=True)
+
+
 if __name__ == "__main__":
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
     print("Starting Battlesnake Server...")
@@ -90,15 +100,14 @@ if __name__ == "__main__":
         state.set_save_folder(os.environ['SAVE_FOLDER'])
         state.set_training_iterations(int(os.environ['ITERATIONS']))
         app.run(host="0.0.0.0", port=port, debug=False)
-    elif "SNAKE_NETWORK" in os.environ:
+    elif "PRODUCATION_SNAKE" in os.environ:
         # Load all of the script files
-        print("This function is currently not supportted")
-        print("TODO:")
-        print("Make sure that the neural network is saved after each generation")
-        print("Using a folder, open that up and use the best network there")
-        print("Will be implemented later")
-        state.set_training(False)
+        is_training = os.getenv("TRAIN", False)
+        state.set_training(is_training)
+        state.enable_download_training_data(is_training)
         state.set_initial_network(os.environ['SNAKE_NETWORK'])
+        state.set_training_iterations(os.getenv("ITERATIONS", 0))
+        state.set_save_folder(os.getenv('SAVE_FOLDER'))
         app.run(host="0.0.0.0", port=port, debug=False)
     else:
         # Start running the training script

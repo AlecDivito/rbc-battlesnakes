@@ -4,6 +4,7 @@ from training.game import Game
 from training.population import Population
 from training.constant import BoardItem, Evolution
 import numpy as np
+import shutil
 
 """
 This file can be a nice home for your move logic, and to write helper functions.
@@ -22,6 +23,7 @@ class State:
         self.default_network_path = None
         self.training_iterations = None
         self.iterations = 0
+        self.allow_download_of_training_data = False
 
     def set_training(self, train=True):
         self.train = train
@@ -38,6 +40,17 @@ class State:
     def set_training_iterations(self, iterations):
         self.training_iterations = iterations
         self.population.set_multisnake_iteration_size(iterations)
+
+    def enable_download_training_data(self, can_download_training_data):
+        self.allow_download_of_training_data = can_download_training_data
+
+    def build_data_zip_file(self):
+        if self.allow_download_of_training_data == False:
+            return "./no.txt"
+        output = "./data.zip"
+        shutil.make_archive(
+            output, 'zip', self.population.snake_save_folder_path)
+        return output
 
     def newGame(self, id, number_of_snakes):
         """
