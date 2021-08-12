@@ -93,7 +93,8 @@ if __name__ == "__main__":
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
     print("Starting Battlesnake Server...")
     port = int(os.environ.get("PORT", "8080"))
-    print(os.environ)
+    print("Is this being deployed to productions? {}".format(
+        "PRODUCATION_SNAKE" in os.environ))
 
     if "MULTI_SNAKE_TRAINING" in os.environ:
         state.set_training(True)
@@ -101,14 +102,20 @@ if __name__ == "__main__":
         state.set_save_folder(os.environ['SAVE_FOLDER'])
         state.set_training_iterations(int(os.environ['ITERATIONS']))
         app.run(host="0.0.0.0", port=port, debug=False)
-    elif "PRODUCATION_SNAKE" in os.environ:
+    elif bool(os.getenv("PRODUCATION_SNAKE", True)):
         # Load all of the script files
-        is_training = bool(os.getenv("TRAIN", False))
+        is_training = bool(os.getenv("TRAIN", True))
         state.set_training(is_training)
         state.enable_download_training_data(is_training)
-        state.set_initial_network(os.environ['SNAKE_NETWORK'])
-        state.set_training_iterations(int(os.getenv("ITERATIONS", 0)))
-        state.set_save_folder(os.getenv('SAVE_FOLDER'))
+        print("This snake is Training? {}".format(is_training))
+        initial_network = os.getenv(
+            "SNAKE_NETWORK", "./best_snake/gen:6-fitness:37008")
+        state.set_initial_network(initial_network)
+        print("The snake is starting using {}".format(initial_network))
+        iterations = int(os.getenv("ITERATIONS", 25))
+        state.set_training_iterations(iterations)
+        print("Starting training at {} iterations".format(iterations))
+        state.set_save_folder(os.getenv('SAVE_FOLDER', './network'))
         app.run(host="0.0.0.0", port=port, debug=False)
     else:
         # Start running the training script
