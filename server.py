@@ -102,11 +102,11 @@ if __name__ == "__main__":
         app.run(host="0.0.0.0", port=port, debug=False)
     elif "PRODUCATION_SNAKE" in os.environ:
         # Load all of the script files
-        is_training = os.getenv("TRAIN", False)
+        is_training = bool(os.getenv("TRAIN", False))
         state.set_training(is_training)
         state.enable_download_training_data(is_training)
         state.set_initial_network(os.environ['SNAKE_NETWORK'])
-        state.set_training_iterations(os.getenv("ITERATIONS", 0))
+        state.set_training_iterations(int(os.getenv("ITERATIONS", 0)))
         state.set_save_folder(os.getenv('SAVE_FOLDER'))
         app.run(host="0.0.0.0", port=port, debug=False)
     else:

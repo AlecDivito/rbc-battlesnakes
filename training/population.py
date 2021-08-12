@@ -5,7 +5,7 @@ from training.constant import Evolution
 from training.snake import Snake
 from training.game import Game
 
-mutation_rate = 0.99
+mutation_rate = 0.98
 
 
 class BestSnake(Snake):
