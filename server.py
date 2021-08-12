@@ -93,6 +93,7 @@ if __name__ == "__main__":
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
     print("Starting Battlesnake Server...")
     port = int(os.environ.get("PORT", "8080"))
+    print(os.environ)
 
     if "MULTI_SNAKE_TRAINING" in os.environ:
         state.set_training(True)
